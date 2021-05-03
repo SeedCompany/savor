@@ -37,28 +37,23 @@ select sc_add_org('SIL', 'org102');
 select sc_add_org('Wycliffe USA', 'org103');
                 
 -- AUTHORIZATIONS
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (1, 'sc_users', 'sys_user_id');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (1, 'sc_users', 'first_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (1, 'sc_users', 'last_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (1, 'sc_users', 'full_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (1, 'sc_users', 'created_at');
 
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (2, 'sc_users', 'sys_user_id');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (2, 'sc_users', 'first_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (2, 'sc_users', 'last_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (2, 'sc_users', 'full_name');
-insert into sys_column_access_by_user ("sys_user_id", "table_name", "column_name") values (2, 'sc_users', 'created_at');
+select sys_add_column_access_for_user('sc_admin@asdf.com', 'sc_users', 'sys_user_id');
+select sys_add_column_access_for_user('sc_admin@asdf.com', 'sc_users', 'first_name');
+select sys_add_column_access_for_user('sc_admin@asdf.com', 'sc_users', 'last_name');
+select sys_add_column_access_for_user('sc_admin@asdf.com', 'sc_users', 'full_name');
+select sys_add_column_access_for_user('sc_admin@asdf.com', 'sc_users', 'created_at');
 
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (3, 'sc_users', 'sys_user_id');
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (3, 'sc_users', 'first_name');
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (3, 'sc_users', 'created_at');
+select sys_add_column_access_for_group('sc_project_managers', 'sc_users', 'sys_user_id');
+select sys_add_column_access_for_group('sc_project_managers', 'sc_users', 'first_name');
+select sys_add_column_access_for_group('sc_project_managers', 'sc_users', 'created_at');
 
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (4, 'sc_users', 'sys_user_id');
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (4, 'sc_users', 'first_name');
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (4, 'sc_users', 'created_at');
+select sys_add_column_access_for_group('sc_regional_directors', 'sc_users', 'sys_user_id');
+select sys_add_column_access_for_group('sc_regional_directors', 'sc_users', 'first_name');
+select sys_add_column_access_for_group('sc_regional_directors', 'sc_users', 'created_at');
 
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (3, 'sc_users', 'sys_user_id');
-insert into sys_column_access_by_group ("sys_group_id", "table_name", "column_name") values (3, 'sc_users', 'first_name');
+select sys_add_column_access_for_group('sc_consultants', 'sc_users', 'sys_user_id');
+select sys_add_column_access_for_group('sc_consultants', 'sc_users', 'first_name');
 
 insert into sys_row_access_by_user ("sys_user_id", "table_name", "row_id") values (3, 'sc_users', 2);
 insert into sys_row_access_by_user ("sys_user_id", "table_name", "row_id") values (3, 'sc_users', 3);
