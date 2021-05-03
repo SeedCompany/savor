@@ -60,7 +60,7 @@ class Authorization (conn: Connection) {
         	INTO vSysUserId
         	WHERE sys_users.email = pEmail;
         	IF found THEN
-        		INSERT INTO sys_column_access_by_user("sys_user_id", "table_name","column_name")
+        		INSERT INTO sys_column_access_by_user("sys_user_id", "table_name", "column_name")
         		VALUES (vSysUserId, pTableName, pColumnName)
         		ON CONFLICT
         		DO NOTHING;

@@ -9,5 +9,18 @@ BEGIN
     END LOOP;
 END $$;
 
-drop type if exists e_table_name;
-drop type if exists e_column_name;
+drop type if exists e_table_name cascade;
+drop type if exists e_column_name cascade;
+
+-- Authentication
+drop function if exists sc_add_user cascade;
+
+-- Organization
+drop function if exists sc_add_org cascade;
+
+-- Authorization
+drop function if exists sys_add_member cascade;
+drop function if exists sys_add_column_access_for_user cascade;
+drop function if exists sys_add_column_access_for_group cascade;
+drop function if exists sys_add_row_access_for_user cascade;
+drop function if exists sys_add_row_access_for_group cascade;

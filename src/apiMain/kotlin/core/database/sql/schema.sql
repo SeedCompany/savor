@@ -16,13 +16,16 @@ END; $$;
 -- security only on columns that users will access
 DO $$ BEGIN
 	create type e_column_name as enum (
-		'created_at'
+		'created_at',
 		'email',
 		'engagement_id',
+		'first_name',
+		'full_name',
 		'group_id',
 		'id',
 		'internal_id',
 		'language_id',
+		'last_name',
 		'name',
 		'private_name',
 		'private_name_override',

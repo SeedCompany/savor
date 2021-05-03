@@ -27,9 +27,9 @@ select sys_add_member('sc_regional_director@asdf.com', 'sc_regional_directors');
 select sys_add_member('sc_consultant@asdf.com', 'sc_consultants');
 
 -- SYS ORGANIZATIONS
-insert into sys_organizations ("private_name", "public_name") values ('Seed Company', 'Seed Company') on conflict ("private_name", "public_name") do nothing;
-insert into sys_organizations ("private_name", "public_name") values ('SIL', 'SIL') on conflict ("private_name", "public_name") do nothing;
-insert into sys_organizations ("private_name", "public_name") values ('Wycliffe USA', 'Wycliffe USA') on conflict ("private_name", "public_name") do nothing;
+insert into sys_organizations ("private_name", "public_name") values ('Seed Company', 'Seed Company') on conflict do nothing;
+insert into sys_organizations ("private_name", "public_name") values ('SIL', 'SIL') on conflict  do nothing;
+insert into sys_organizations ("private_name", "public_name") values ('Wycliffe USA', 'Wycliffe USA') on conflict do nothing;
 
 -- SC ORGANIZATIONS
 select sc_add_org('Seed Company', 'org101');
@@ -55,10 +55,14 @@ select sys_add_column_access_for_group('sc_regional_directors', 'sc_users', 'cre
 select sys_add_column_access_for_group('sc_consultants', 'sc_users', 'sys_user_id');
 select sys_add_column_access_for_group('sc_consultants', 'sc_users', 'first_name');
 
-insert into sys_row_access_by_user ("sys_user_id", "table_name", "row_id") values (3, 'sc_users', 2);
-insert into sys_row_access_by_user ("sys_user_id", "table_name", "row_id") values (3, 'sc_users', 3);
-insert into sys_row_access_by_user ("sys_user_id", "table_name", "row_id") values (3, 'sc_users', 4);
+select sys_add_row_access_for_user('sc_project_manager@asdf.com', 'sc_users', 'sc_project_manager@asdf.com');
+select sys_add_row_access_for_user('sc_project_manager@asdf.com', 'sc_users', 'sc_regional_director@asdf.com');
+select sys_add_row_access_for_user('sc_project_manager@asdf.com', 'sc_users', 'sc_consultant@asdf.com');
 
-insert into sys_row_access_by_group ("sys_group_id", "table_name", "row_id") values (4, 'sc_users', 2);
-insert into sys_row_access_by_group ("sys_group_id", "table_name", "row_id") values (4, 'sc_users', 3);
-insert into sys_row_access_by_group ("sys_group_id", "table_name", "row_id") values (4, 'sc_users', 4);
+select sys_add_row_access_for_user('sc_regional_directors', 'sc_users', 'sc_project_manager@asdf.com');
+select sys_add_row_access_for_user('sc_regional_directors', 'sc_users', 'sc_regional_director@asdf.com');
+select sys_add_row_access_for_user('sc_regional_directors', 'sc_users', 'sc_consultant@asdf.com');
+
+select sys_add_row_access_for_group('sc_regional_directors', 'sc_users', 'sc_regional_director@asdf.com');
+select sys_add_row_access_for_group('sc_regional_directors', 'sc_users', 'sc_project_manager@asdf.com');
+select sys_add_row_access_for_group('sc_regional_directors', 'sc_users', 'sc_consultant@asdf.com');

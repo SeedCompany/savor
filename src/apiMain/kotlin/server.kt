@@ -1,5 +1,6 @@
 import components.authentication.Authentication
 import components.authorization.Authorization
+import components.organization.Organization
 import components.user.User
 import core.database.Database
 import io.ktor.application.call
@@ -34,6 +35,7 @@ fun main() {
 
     Authentication(conn)
     Authorization(conn)
+    Organization(conn)
     User(conn)
 
 
