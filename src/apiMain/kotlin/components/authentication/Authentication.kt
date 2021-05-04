@@ -19,15 +19,15 @@ class Authentication ( val conn: Connection) {
             vId INT;
         begin
             SELECT email 
-            FROM users
+            FROM sys_users
             INTO vEmail
-            WHERE users.email = pEmail;
+            WHERE sys_users.email = pEmail;
             IF NOT found THEN
-                INSERT INTO users("email", "password")
+                INSERT INTO sys_users("email", "password")
                 VALUES (pEmail, pPassword)
-                RETURNING id
+                RETURNING sys_user_id
                 INTO vId;
-                INSERT INTO tokens("token", "user_id")
+                INSERT INTO sys_tokens("token", "sys_user_id")
                 VALUES (pToken, vId);
                 vResponseCode := 0;
             ELSE
@@ -48,16 +48,16 @@ class Authentication ( val conn: Connection) {
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
-            vRow users%ROWTYPE;
+            vRow sys_users%ROWTYPE;
             vId INT;
         begin
             SELECT * 
-            FROM users
+            FROM sys_users
             INTO vRow
-            WHERE users.email = pEmail AND users.password = pPassword;
+            WHERE sys_users.email = pEmail AND sys_users.password = pPassword;
             IF found THEN
-                INSERT INTO tokens("token", "user_id")
-                VALUES (pToken, vRow.id);
+                INSERT INTO sys_tokens("token", "sys_user_id")
+                VALUES (pToken, vRow.sys_user_id);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -69,7 +69,8 @@ class Authentication ( val conn: Connection) {
     init {
         val statement = conn.createStatement()
 
-//        statement.execute(this.loginProc)
+        statement.execute(this.registerProc)
+        statement.execute(this.loginProc)
 
         statement.close()
     }

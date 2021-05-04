@@ -8,9 +8,9 @@ insert into sys_users ("email", "password") values ('sc_consultant@asdf.com', 'a
 
 -- SC USERS
 select sc_add_user('sc_admin@asdf.com', 'SC', 'Admin');
-select sc_add_user('sc_project_manager@asdf.com', 'SC', 'Admin');
-select sc_add_user('sc_regional_director@asdf.com', 'SC', 'Admin');
-select sc_add_user('sc_consultant@asdf.com', 'SC', 'Admin');
+select sc_add_user('sc_project_manager@asdf.com', 'Project', 'Manager');
+select sc_add_user('sc_regional_director@asdf.com', 'Regional', 'Director');
+select sc_add_user('sc_consultant@asdf.com', 'SC', 'Consultant');
 
 -- GROUPS
 insert into sys_groups ("name") values ('sys_admins') on conflict ("name") do nothing; 

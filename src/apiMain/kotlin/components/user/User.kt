@@ -34,10 +34,15 @@ class User ( conn: Connection) {
         end; ${'$'}${'$'};
     """.trimIndent()
 
+    val secureRead = """
+        
+    """.trimIndent()
+
     init {
         val statement = conn.createStatement()
 
         statement.execute(this.scAddUserProc)
+//        statement.execute(this.secureRead)
 
         statement.close()
     }
