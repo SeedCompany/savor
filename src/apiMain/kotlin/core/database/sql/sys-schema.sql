@@ -83,12 +83,18 @@ create table if not exists sys_users(
 	created_at timestamp not null default CURRENT_TIMESTAMP
 );
 
-create table if not exists sys_people(
-	sys_user_id int primary key not null,
-	first_name varchar(64),
-	last_name varchar(64),
-	full_name varchar(128),
-	created_at timestamp not null default CURRENT_TIMESTAMP
+create table if not exists sys_people (
+    sys_person_id serial primary key,
+    sys_user_id int,
+    private_first_name varchar(32),
+    private_last_name varchar(32),
+    public_first_name varchar(32),
+    public_last_name varchar(32),
+    private_full_name varchar(64),
+    public_full_name varchar(64),
+    primary_sys_org_id int,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    foreign key (sys_user_id) references sys_users(sys_user_id)
 );
 
 create table if not exists sys_groups(
