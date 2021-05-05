@@ -19,7 +19,6 @@ DO $$ BEGIN
         'sys_column_access_by_user',
         'sys_groups',
         'sys_group_memberships_by_user',
-        'sys_organizations',
 		'sys_people',
 		'sys_row_access_by_group',
 		'sys_row_access_by_user',
@@ -53,7 +52,7 @@ DO $$ BEGIN
 		'public_name',
 		'public_name_override',
 		'row_id',
-		'sys_org_id',
+		'sys_group_id',
 		'sys_group_id',
 		'sys_project_id',
 		'sys_user_id',
@@ -72,6 +71,34 @@ DO $$ BEGIN
           'State',
 		  'Country',
           'CrossBorderArea'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type enum_person_to_org_relationship_type as enum (
+          'Vendor',
+          'Customer',
+          'Investor',
+          'Associate',
+          'Employee',
+          'Member',
+		  'Executive',
+		  'President/CEO',
+          'Board of Directors',
+          'Retired',
+          'Other'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type enum_group_type as enum (
+          'SC Project',
+          'SC Role',
+          'Other',
 	);
 	EXCEPTION
 	WHEN duplicate_object THEN null;
@@ -99,15 +126,6 @@ create table if not exists sil_table_of_languages (
 	provisional_code varchar(32)
 );
 
--- ORGANIZATIONS -----------------------------------------------------------------
-
-create table if not exists sys_organizations(
-	sys_org_id serial primary key,
-	private_name varchar(255) unique not null,
-	public_name varchar(255) unique not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP
-);
-
 -- USERS + GROUPS ------------------------------------------------------------
 
 create table if not exists sys_users(
@@ -119,22 +137,48 @@ create table if not exists sys_users(
 
 create table if not exists sys_people (
     sys_person_id serial primary key,
-    sys_user_id int,
+    about text,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    phone varchar(32),
+	picture varchar(255),
+    primary_sys_group_id int,
     private_first_name varchar(32),
     private_last_name varchar(32),
     public_first_name varchar(32),
     public_last_name varchar(32),
     private_full_name varchar(64),
     public_full_name varchar(64),
-    primary_sys_org_id int,
-    created_at timestamp not null default CURRENT_TIMESTAMP,
-    foreign key (sys_user_id) references sys_users(sys_user_id)
+    sys_user_id int,
+    time_zone varchar(32),
+    title varchar(32),
+    foreign key (sys_user_id) references sys_users(sys_user_id),
+    foreign key (primary_sys_group_id) references sys_groups(sys_group_id)
+);
+
+create table if not exists sys_user_to_organization(
+	sys_person_id int not null,
+	sys_group_id int not null,
+	relationship_types enum_person_to_org_relationship_type[],
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	primary key (sys_person_id, sys_group_id),
+	foreign key (sys_person_id) references sys_people(sys_person_id),
+	foreign key (sys_group_id) references sys_groups(sys_group_id)
+);
+
+create table if not exists sys_user_to_locations(
+	sys_person_id int not null,
+	sys_location_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	primary key (sys_person_id, sys_location_id),
+    foreign key (sys_person_id) references sys_people(sys_person_id),
+    foreign key (sys_location_id) references sys_locations(sys_location_id)
 );
 
 create table if not exists sys_groups(
 	sys_group_id serial primary key,
-	name varchar(255) unique not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP
+	name varchar(255) unique not null,
+	type enum_group_type not null,
 );
 
 create table if not exists sys_group_memberships_by_user(
@@ -144,6 +188,24 @@ create table if not exists sys_group_memberships_by_user(
 	primary key (sys_user_id, sys_group_id),
 	foreign key (sys_user_id) references sys_users(sys_user_id),
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
+);
+
+create table if not exists sys_education_entries (
+    sys_education_id serial primary key,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+    degree varchar(64),
+    institution varchar(64),
+    major varchar(64),
+	foreign key (sys_person_id) references sys_people(sys_user_id)
+);
+
+create table if not exists sc_education_by_person (
+    sys_person_id int not null,
+    sys_education_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+    graduation_year int,
+	foreign key (sys_person_id) references sys_people(sys_user_id),
+	foreign key (sys_education_id) references sys_education_entries(sys_education_id)
 );
 
 -- AUTHORIZATION ------------------------------------------------------------
