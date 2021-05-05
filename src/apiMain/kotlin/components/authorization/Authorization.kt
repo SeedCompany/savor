@@ -45,8 +45,8 @@ class Authorization (conn: Connection) {
     val sysAddColumnAccessForUserProc = """
         create or replace function sys_add_column_access_for_user(
         	in pEmail VARCHAR (255),
-            in pTableName e_table_name,
-            in pColumnName e_column_name
+            in pTableName enum_table_name,
+            in pColumnName enum_column_name
         )
         returns INT
         language plpgsql
@@ -75,8 +75,8 @@ class Authorization (conn: Connection) {
     val sysAddColumnAccessForGroupProc = """
         create or replace function sys_add_column_access_for_group(
         	in pGroupName VARCHAR (255),
-            in pTableName e_table_name,
-            in pColumnName e_column_name
+            in pTableName enum_table_name,
+            in pColumnName enum_column_name
         )
         returns INT
         language plpgsql
@@ -105,7 +105,7 @@ class Authorization (conn: Connection) {
     val sysAddRowAccessForUserProc = """
         create or replace function sys_add_row_access_for_user(
         	in pEmailOfGrantee VARCHAR (255),
-            in pTableName e_table_name,
+            in pTableName enum_table_name,
             in pEmailOfGranter VARCHAR (255)
         )
         returns INT
@@ -144,7 +144,7 @@ class Authorization (conn: Connection) {
     val sysAddRowAccessForGroupProc = """
         create or replace function sys_add_row_access_for_group(
         	in pGroupNameGrantee VARCHAR (255),
-            in pTableName e_table_name,
+            in pTableName enum_table_name,
             in pEmailOfGranter VARCHAR (255)
         )
         returns INT

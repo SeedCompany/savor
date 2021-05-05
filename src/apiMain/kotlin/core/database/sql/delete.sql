@@ -1,3 +1,7 @@
+-- DELETE EVERYTHING
+
+-- TABLES -------------------------------------------------------------------------------
+
 DO $$ DECLARE
     r RECORD;
 BEGIN
@@ -9,8 +13,17 @@ BEGIN
     END LOOP;
 END $$;
 
-drop type if exists e_table_name cascade;
-drop type if exists e_column_name cascade;
+-- ENUMs -------------------------------------------------------------------------------
+
+drop type if exists enum_table_name cascade;
+drop type if exists enum_column_name cascade;
+drop type if exists enum_location_type cascade;
+drop type if exists sc_enum_involvements cascade;
+drop type if exists sc_enum_people_transitions cascade;
+drop type if exists sc_enum_org_transitions cascade;
+drop type if exists sc_enum_sensitivity cascade;
+
+-- FUNCTIONS ---------------------------------------------------------------------------
 
 -- Authentication
 drop function if exists sc_add_user cascade;

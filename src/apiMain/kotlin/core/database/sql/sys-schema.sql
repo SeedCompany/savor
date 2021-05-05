@@ -65,6 +65,40 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
+DO $$ BEGIN
+    create type enum_location_type as enum (
+          'City',
+          'County',
+          'State',
+		  'Country',
+          'CrossBorderArea'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+-- LOCATION -----------------------------------------------------------------
+
+create table if not exists sys_locations (
+	sys_location_id serial primary key,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	name varchar(32) unique not null,
+	type enum_location_type not null
+);
+
+-- LANGUAGE -----------------------------------------------------------------
+
+-- todo: map the 3 SIL tables:
+-- http://www.ethnologue.com/sites/default/files/Ethnologue-19-Global%20Dataset%20Doc.pdf
+create table if not exists sil_table_of_languages (
+	ISO_639 char(3) primary key,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	code varchar(32),
+	Language_Name varchar(50) not null,
+	population int,
+	provisional_code varchar(32)
+);
+
 -- ORGANIZATIONS -----------------------------------------------------------------
 
 create table if not exists sys_organizations(
