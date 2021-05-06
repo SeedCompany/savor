@@ -18,10 +18,28 @@ END $$;
 drop type if exists enum_table_name cascade;
 drop type if exists enum_column_name cascade;
 drop type if exists enum_location_type cascade;
+drop type if exists enum_person_to_org_relationship_type cascade;
+drop type if exists enum_group_type cascade;
+drop type if exists enum_mime_type cascade;
+drop type if exists enum_book_name cascade;
+
 drop type if exists sc_enum_involvements cascade;
 drop type if exists sc_enum_people_transitions cascade;
 drop type if exists sc_enum_org_transitions cascade;
 drop type if exists sc_enum_sensitivity cascade;
+drop type if exists sc_enum_financial_reporting_types cascade;
+drop type if exists sc_enum_partner_types cascade;
+drop type if exists sc_enum_project_step cascade;
+drop type if exists sc_enum_project_status cascade;
+drop type if exists sc_enum_budget_status cascade;
+drop type if exists sc_enum_engagement_status cascade;
+drop type if exists sc_enum_project_engagement_tag cascade;
+drop type if exists sc_enum_internship_methodology cascade;
+drop type if exists sc_enum_internship_position cascade;
+drop type if exists sc_enum_product_mediums cascade;
+drop type if exists sc_enum_product_methodologies cascade;
+drop type if exists sc_enum_product_purposes cascade;
+drop type if exists sc_enum_product_type cascade;
 
 -- FUNCTIONS ---------------------------------------------------------------------------
 

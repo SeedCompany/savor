@@ -53,7 +53,6 @@ DO $$ BEGIN
 		'public_name_override',
 		'row_id',
 		'sys_group_id',
-		'sys_group_id',
 		'sys_project_id',
 		'sys_user_id',
 		'table_name',
@@ -98,11 +97,57 @@ DO $$ BEGIN
     create type enum_group_type as enum (
           'SC Project',
           'SC Role',
-          'Other',
+          'Other'
 	);
 	EXCEPTION
 	WHEN duplicate_object THEN null;
 END; $$;
+
+-- todo
+DO $$ BEGIN
+    create type enum_mime_type as enum (
+          'A',
+          'B',
+          'C'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+-- todo
+DO $$ BEGIN
+    create type enum_book_name as enum (
+          'Genesis',
+          'Matthew',
+          'Revelation'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+-- HISTORY -----------------------------------------------------------------
+
+create table if not exists sys_history(
+    sys_history_id serial primary key,
+    table_name enum_table_name,
+    column_name enum_column_name,
+    new_field_value text,
+    created_at timestamp not null default CURRENT_TIMESTAMP
+);
+
+-- SCRIPTURE REFERENCE -----------------------------------------------------------------
+
+create table if not exists sys_scripture_references (
+    sys_scripture_reference_id serial primary key,
+    book_start enum_book_name,
+    book_end enum_book_name,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    chapter_start int,
+    chapter_end int,
+    verse_start int,
+    verse_end int,
+    unique (book_start, book_end, chapter_start, chapter_end, verse_start, verse_end)
+);
 
 -- LOCATION -----------------------------------------------------------------
 
@@ -133,6 +178,13 @@ create table if not exists sys_users(
 	email varchar(255) unique not null,
 	password varchar(255) not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP
+);
+
+create table if not exists sys_groups(
+	sys_group_id serial primary key,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	name varchar(255) unique not null,
+	type enum_group_type not null
 );
 
 create table if not exists sys_people (
@@ -174,13 +226,6 @@ create table if not exists sys_user_to_locations(
     foreign key (sys_location_id) references sys_locations(sys_location_id)
 );
 
-create table if not exists sys_groups(
-	sys_group_id serial primary key,
-	created_at timestamp not null default CURRENT_TIMESTAMP
-	name varchar(255) unique not null,
-	type enum_group_type not null,
-);
-
 create table if not exists sys_group_memberships_by_user(
 	sys_user_id int not null,
 	sys_group_id int not null,
@@ -195,8 +240,7 @@ create table if not exists sys_education_entries (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     degree varchar(64),
     institution varchar(64),
-    major varchar(64),
-	foreign key (sys_person_id) references sys_people(sys_user_id)
+    major varchar(64)
 );
 
 create table if not exists sc_education_by_person (
@@ -204,7 +248,7 @@ create table if not exists sc_education_by_person (
     sys_education_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     graduation_year int,
-	foreign key (sys_person_id) references sys_people(sys_user_id),
+	foreign key (sys_person_id) references sys_people(sys_person_id),
 	foreign key (sys_education_id) references sys_education_entries(sys_education_id)
 );
 
