@@ -1,6 +1,26 @@
 # Savor
 
-Experiment in a common Postgres DB for DA/DevOps  
+Experiment in a common Postgres DB for DA/DevOps
+
+# API
+
+- Create an application.conf file in the apiMain resources folder. Look at the Config service for its structure. Here is a sample: 
+
+savor {
+    postgres {
+        url = ""
+        database = ""
+        user = ""
+        password = ""
+    }
+    neo4j {
+        url = ""
+        database = ""
+        user = ""
+        password = ""
+    }
+}
+
 
 ## Todo
 
