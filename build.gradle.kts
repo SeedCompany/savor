@@ -44,6 +44,7 @@ kotlin {
         }
         val apiMain by getting {
             dependencies {
+                implementation("org.neo4j.driver:neo4j-java-driver:4.2.5")
                 implementation("org.mybatis:mybatis:3.5.7")
                 implementation("io.ktor:ktor-server-netty:1.4.0")
                 implementation("io.ktor:ktor-html-builder:1.4.0")

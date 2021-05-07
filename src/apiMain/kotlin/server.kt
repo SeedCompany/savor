@@ -2,7 +2,10 @@ import components.authentication.Authentication
 import components.authorization.Authorization
 import components.organization.Organization
 import components.user.User
+import core.Config
+import core.Migration
 import core.database.Database
+import core.database.Neo4j
 import io.ktor.application.call
 import io.ktor.html.respondHtml
 import io.ktor.http.HttpStatusCode
@@ -30,19 +33,24 @@ fun HTML.index() {
 }
 
 fun main() {
-    val db = Database()
-    val conn = db.getConnection()
+    val config = Config()
+    val db = Database(config)
+    val neo4j = Neo4j(config)
+    val migration = Migration(config, neo4j, db.conn)
 
-    Authentication(conn)
-    Authorization(conn)
-    Organization(conn)
-    User(conn)
+    Authentication(db.conn)
+    Authorization(db.conn)
+    Organization(db.conn)
+    User(db.conn)
 
 
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         routing {
             get("/") {
                 call.respondHtml(HttpStatusCode.OK, HTML::index)
+            }
+            get("/migrate"){
+                migration.migrate()
             }
             static("/static") {
                 resources()

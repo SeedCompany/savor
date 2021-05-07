@@ -1,3 +1,3 @@
 
-rootProject.name = "cord4"
+rootProject.name = "savor"
 
