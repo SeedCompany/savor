@@ -69,7 +69,7 @@ class Migration (
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            println("Organizations")
+            print("Organizations ")
             val result = it.run(
             "match (n:Organization) return count(n) as orgs"
             )
@@ -77,7 +77,7 @@ class Migration (
             while (result.hasNext()){
                 val record = result.next()
                 count = record.get("orgs").asInt()
-                println("Count: $count")
+                print("Count: $count ")
             }
 
             result.consume()
@@ -85,7 +85,7 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print(" ${i}")
+                print("\n${i+1} ")
                 val getOrgResult = it.run(
                     """
                         match (n:Organization)
@@ -122,8 +122,9 @@ class Migration (
                             orgName = record.get("propValue").asString()
                             orgNameCreatedAt = record.get("createdAt").asZonedDateTime()
                         }
+                        "canDelete" -> {}
                         else -> {
-                            println("orgId $orgId: failed to recognize property $propName")
+                            print("orgId $orgId: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -138,7 +139,7 @@ class Migration (
                 val createOrgResult = callFun.executeQuery()
                 createOrgResult.next()
                 val code = createOrgResult.getInt(1)
-                println("internal org id: $orgId code: $code")
+                print("internal org id: $orgId code: $code")
                 createOrgResult.close()
             }
         }
@@ -146,9 +147,9 @@ class Migration (
 
     // USERS ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    val migrateUserProc = """
-        create or replace function migrate_user_proc(
-            in pInternalId VARCHAR(32),
+    val migratePeopleProc = """
+        create or replace function migrate_people_proc(
+            in pInternalId varchar(32),
             in pAbout text,
             in pEmail varchar(255),
             in pPrivateFirstName varchar(32),
@@ -159,7 +160,7 @@ class Migration (
             in pPublicLastName varchar(32),
             in pStatus varchar(32),
             in pTimezone varchar(32),
-            in pTitle varchar(32)
+            in pTitle varchar(255)
         )
         returns INT
         language plpgsql
@@ -173,8 +174,8 @@ class Migration (
             INTO vSysPersonId
             WHERE sc_people_ext_sys_people.sc_internal_person_id = pInternalId;
             IF NOT found THEN
-                INSERT INTO sys_people("about", "phone", "private_first_name", "public_first_name", "public_first_name", "public_last_name", "time_zone", "title")
-                VALUES (pName, 'Organization')
+                INSERT INTO sys_people("about", "phone", "private_first_name", "private_last_name", "public_first_name", "public_last_name", "time_zone", "title")
+                VALUES (pAbout, pPhone, pPrivateFirstName, pPrivateLastName, pPublicFirstName, pPublicLastName, pTimezone, pTitle)
                 RETURNING sys_person_id
                 INTO vSysPersonId;
                 INSERT INTO sc_people_ext_sys_people("sys_person_id", "sc_internal_person_id", "status")
@@ -189,7 +190,7 @@ class Migration (
 
     init {
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateUserProc)
+        statement.execute(this.migratePeopleProc)
         statement.close()
     }
 
@@ -197,22 +198,22 @@ class Migration (
 
         //language=SQL
         val createUserSQL = this.connection.prepareStatement("""
-            select migrate_user_proc from migrate_user_proc(?, ?, ?);
+            select migrate_people_proc from migrate_people_proc(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """.trimIndent()
         )
 
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            println("Users")
+            print("\nUsers ")
             val result = it.run(
-                "match (n:Users) return count(n) as users"
+                "match (n:User) return count(n) as users"
             )
 
             while (result.hasNext()){
                 val record = result.next()
                 count = record.get("users").asInt()
-                println("Count: $count")
+                print("Count: $count \n")
             }
 
             result.consume()
@@ -220,10 +221,10 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print(" ${i}")
-                val getOrgResult = it.run(
+                print("\n${i+1} ")
+                val getUserResult = it.run(
                     """
-                        match (n:Users)
+                        match (n:User)
                         with *
                         skip $i
                         limit 1
@@ -250,8 +251,8 @@ class Migration (
                 var timezone: String? = null
                 var title: String? = null
 
-                while (getOrgResult.hasNext()){
-                    val record = getOrgResult.next()
+                while (getUserResult.hasNext()){
+                    val record = getUserResult.next()
 
                     userId = record.get("userId").asString()
                     val propName = record.get("propName").asString()
@@ -270,7 +271,7 @@ class Migration (
                             displayLastName = record.get("propValue").asString()
                         }
                         "password" -> {
-                            timezone = record.get("propValue").asString()
+                            password = record.get("propValue").asString()
                         }
                         "phone" -> {
                             phone = record.get("propValue").asString()
@@ -290,8 +291,10 @@ class Migration (
                         "title" -> {
                             title = record.get("propValue").asString()
                         }
+                        "canDelete" -> {}
+                        "roles" -> {}
                         else -> {
-                            println("userId $userId: failed to recognize property $propName")
+                            print("userId $userId: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -316,9 +319,11 @@ class Migration (
                 val createResult = createUserSQL.executeQuery()
                 createResult.next()
                 val code = createResult.getInt(1)
-                println("skip $i internal user id: $userId code: $code")
+                print("internal user id: $userId code: $code ")
                 createResult.close()
             }
         }
     }
+
+
 }

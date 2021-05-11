@@ -203,7 +203,7 @@ create table if not exists sys_people (
     public_full_name varchar(64),
     sys_user_id int,
     time_zone varchar(32),
-    title varchar(32),
+    title varchar(255),
     foreign key (sys_user_id) references sys_users(sys_user_id),
     foreign key (primary_sys_group_id) references sys_groups(sys_group_id)
 );

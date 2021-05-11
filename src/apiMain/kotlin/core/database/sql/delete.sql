@@ -45,6 +45,10 @@ drop type if exists sc_enum_change_to_plan_status cascade;
 
 -- FUNCTIONS ---------------------------------------------------------------------------
 
+-- Migration
+drop function if exists migrate_org_proc cascade;
+drop function if exists migrate_user_proc cascade;
+
 -- Authentication
 drop function if exists sc_add_user cascade;
 drop function if exists sys_login_proc cascade;
