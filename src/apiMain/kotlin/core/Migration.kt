@@ -14,8 +14,8 @@ class Migration (
 
 
     fun migrate(){
-//        this.migrateOrganizations()
-//        this.migrateUsers()
+        this.migrateOrganizations()
+        this.migrateUsers()
         this.migrateRoles()
     }
 
@@ -349,7 +349,7 @@ class Migration (
             WHERE sys_groups.name = CONCAT('SC ', pRoleName);
             IF NOT found THEN
                 INSERT INTO sys_groups("name", "type")
-                VALUES (CONCAT('SC ', pRoleName), 'SC Role')
+                VALUES (CONCAT('SC ', pRoleName), 'SC Global Role')
                 RETURNING sys_group_id
                 INTO vSysGroupId;
                 INSERT INTO sc_roles_ext_sys_groups("sys_group_id", "name")
@@ -385,7 +385,7 @@ class Migration (
                 INTO vSysPersonId
                 WHERE sc_people_ext_sys_people.sc_internal_person_id = pInternalId;
                 IF FOUND THEN
-                    INSERT INTO sc_global_role_memberships("sys_person_id", "sys_group_id")
+                    INSERT INTO sys_group_memberships_by_user("sys_person_id", "sys_group_id")
                     VALUES (vSysPersonId, vSysGroupId);
                     vResponseCode := 0;
                 ELSE
@@ -523,4 +523,6 @@ class Migration (
         }
 
     }
+
+
 }

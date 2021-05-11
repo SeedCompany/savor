@@ -96,8 +96,9 @@ END; $$;
 DO $$ BEGIN
     create type enum_group_type as enum (
           'Organization',
+          'SC Global Role',
           'SC Project',
-          'SC Role',
+          'SC Project Role',
           'Other'
 	);
 	EXCEPTION
@@ -184,8 +185,9 @@ create table if not exists sys_users(
 create table if not exists sys_groups(
 	sys_group_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	name varchar(255) unique not null,
-	type enum_group_type not null
+	name varchar(255) not null,
+	type enum_group_type not null,
+	unique (name, type)
 );
 
 create table if not exists sys_people (
@@ -242,7 +244,7 @@ create table if not exists sys_education_entries (
     major varchar(64)
 );
 
-create table if not exists sc_education_by_person (
+create table if not exists sys_education_by_person (
     sys_person_id int not null,
     sys_education_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
