@@ -14,7 +14,7 @@ class Migration (
 
 
     fun migrate(){
-        this.migrateOrganizations()
+//        this.migrateOrganizations()
         this.migrateUsers()
     }
 
@@ -180,6 +180,10 @@ class Migration (
                 INTO vSysPersonId;
                 INSERT INTO sc_people_ext_sys_people("sys_person_id", "sc_internal_person_id", "status")
                 VALUES (vSysPersonId, pInternalId, pStatus);
+                IF pEmail IS NOT NULL AND pPassword IS NOT NULL THEN
+                    INSERT INTO sys_users("sys_person_id", "email", "password")
+                    VALUES (vSysPersonId, pEmail, pPassword);
+                END IF;
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 1;

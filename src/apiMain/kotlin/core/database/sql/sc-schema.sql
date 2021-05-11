@@ -220,7 +220,7 @@ create table if not exists sc_field_zone (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	director_sys_person_id int,
 	name varchar(32) unique not null,
-	foreign key (director_sys_person_id) references sys_users(sys_user_id)
+	foreign key (director_sys_person_id) references sys_people(sys_person_id)
 );
 
 create table if not exists sc_field_regions (
@@ -228,7 +228,7 @@ create table if not exists sc_field_regions (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	director_sys_person_id int,
 	name varchar(32) unique not null,
-	foreign key (director_sys_person_id) references sys_users(sys_user_id)
+	foreign key (director_sys_person_id) references sys_people(sys_person_id)
 );
 
 create table if not exists sc_locations_ext_sys_locations (
@@ -270,8 +270,8 @@ create table if not exists sc_partners (
 	is_global_innovations_client bool,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	pmc_entity_code varchar(32),
-	point_of_contact_sys_user_id int,
-	foreign key (point_of_contact_sys_user_id) references sys_people(sys_person_id),
+	point_of_contact_sys_person_id int,
+	foreign key (point_of_contact_sys_person_id) references sys_people(sys_person_id),
 	types sc_enum_partner_types[],
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
 );
@@ -373,25 +373,25 @@ create table if not exists sc_directories (
 create table if not exists sc_files (
     sc_file_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	creator_sys_user_id int not null,
+	creator_sys_person_id int not null,
 	name varchar(255),
     sc_directory_id int not null,
 	foreign key (sc_directory_id) references sc_directories(sc_directory_id),
-	foreign key (creator_sys_user_id) references sys_users(sys_user_id)
+	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
 );
 
 create table if not exists sc_file_versions (
     sc_file_version_id serial primary key,
     category varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-    creator_sys_user_id int not null,
+    creator_sys_person_id int not null,
     mime_type enum_mime_type not null,
     name varchar(255) not null,
     sc_file_id int not null,
     sc_file_url varchar(255) not null,
     file_size int, -- bytes
     foreign key (sc_file_id) references sc_files(sc_file_id),
-	foreign key (creator_sys_user_id) references sys_users(sys_user_id)
+	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
 );
 
 -- PROJECT TABLES ----------------------------------------------------------
