@@ -348,7 +348,7 @@ create table if not exists sc_person_unavailabilities (
 
 create table if not exists sc_roles_ext_sys_groups (
     sys_group_id int primary key,
-    name varchar(32) unique not null,
+    name varchar(255) unique not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
 );

@@ -15,7 +15,8 @@ class Migration (
 
     fun migrate(){
 //        this.migrateOrganizations()
-        this.migrateUsers()
+//        this.migrateUsers()
+        this.migrateRoles()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,5 +330,81 @@ class Migration (
         }
     }
 
+    // ROLES /////////////////////////////////////////////////////////////////////////////////////////////////
 
+    val createSCRoleProc = """
+        create or replace function create_sc_role(
+            in pRoleName varchar(255)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vSysGroupId INT;
+        begin
+            SELECT sys_group_id 
+            FROM sys_groups
+            INTO vSysGroupId
+            WHERE sys_groups.name = CONCAT('SC ', pRoleName);
+            IF NOT found THEN
+                INSERT INTO sys_groups("name", "type")
+                VALUES (CONCAT('SC ', pRoleName), 'SC Role')
+                RETURNING sys_group_id
+                INTO vSysGroupId;
+                INSERT INTO sc_roles_ext_sys_groups("sys_group_id", "name")
+                VALUES (vSysGroupId, pRoleName);
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 1;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.createSCRoleProc)
+        statement.close()
+    }
+
+    private fun migrateRoles(){
+
+        val roles = listOf(
+            "Administrator",
+            "Consultant",
+            "Consultant Manager",
+            "Controller",
+            "Field Operations Director",
+            "Financial Analyst",
+            "Fundraising",
+            "Intern",
+            "Leadership",
+            "Lead Financial Analyst",
+            "Liaison",
+            "Marketing",
+            "Mentor",
+            "Project Manager",
+            "Regional Communications Coordinator",
+            "Regional Director",
+            "Staff Member",
+            "Translator"
+        )
+
+        //language=SQL
+        val createRoleSQL = this.connection.prepareStatement("""
+            select create_sc_role from create_sc_role(?);
+        """.trimIndent()
+        )
+
+        for (role in roles){
+            createRoleSQL.setString(1, role)
+            val createResult = createRoleSQL.executeQuery()
+            createResult.next()
+            val code = createResult.getInt(1)
+            println("role created: $role code: $code ")
+            createResult.close()
+        }
+
+    }
 }
