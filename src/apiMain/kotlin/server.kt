@@ -15,7 +15,9 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
+import io.ktor.response.*
 import kotlinx.html.*
+import java.lang.Exception
 
 fun HTML.index() {
     head {
@@ -47,10 +49,16 @@ fun main() {
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         routing {
             get("/") {
+
                 call.respondHtml(HttpStatusCode.OK, HTML::index)
             }
             get("/migrate"){
-                migration.migrate()
+                try {
+                    migration.migrate()
+                } catch (e: Exception){
+                    println(e.localizedMessage)
+                }
+                call.respond(HttpStatusCode.OK, "Migration Done.")
             }
             static("/static") {
                 resources()

@@ -330,6 +330,7 @@ create table if not exists sc_known_languages_by_person (
 
 create table if not exists sc_people_ext_sys_people (
     sys_person_id int primary key,
+    sc_internal_person_id varchar(32) unique,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	skills varchar(32)[],
 	status varchar(32),

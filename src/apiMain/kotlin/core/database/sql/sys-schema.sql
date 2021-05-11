@@ -95,6 +95,7 @@ END; $$;
 
 DO $$ BEGIN
     create type enum_group_type as enum (
+          'Organization',
           'SC Project',
           'SC Role',
           'Other'
@@ -210,9 +211,9 @@ create table if not exists sys_people (
 create table if not exists sys_user_to_organization(
 	sys_person_id int not null,
 	sys_group_id int not null,
-	relationship_types enum_person_to_org_relationship_type[],
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_person_id, sys_group_id),
+	relationship_type enum_person_to_org_relationship_type,
+	primary key (sys_person_id, sys_group_id, relationship_type),
 	foreign key (sys_person_id) references sys_people(sys_person_id),
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
 );
