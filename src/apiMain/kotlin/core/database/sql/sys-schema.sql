@@ -255,12 +255,21 @@ create table if not exists sys_education_by_person (
 
 -- AUTHORIZATION ------------------------------------------------------------
 
-create table if not exists sys_column_access_by_user (
+create table if not exists sys_column_access_by_person (
 	sys_person_id int not null,
 	table_name enum_table_name not null,
 	column_name enum_column_name not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	primary key (sys_person_id, table_name, column_name),
+	foreign key (sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sys_row_access_by_person (
+	sys_person_id int not null,
+	table_name enum_table_name not null,
+	row_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	primary key (sys_person_id, table_name, row_id),
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
@@ -271,15 +280,6 @@ create table if not exists sys_column_access_by_group (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	primary key (sys_group_id, table_name, column_name),
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
-);
-
-create table if not exists sys_row_access_by_user (
-	sys_person_id int not null,
-	table_name enum_table_name not null,
-	row_id int not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_person_id, table_name, row_id),
-	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
 create table if not exists sys_row_access_by_group (
@@ -302,17 +302,40 @@ create table if not exists sys_tokens (
 
 -- VIEWS ----------------------------------------------------------------------
 
+create or replace function fun_column_security(
+    in pRoleName varchar(255)
+)
+returns table(
+    grant_sys_person_id int,
+    grant_table_name enum_table_name,
+    grant_column_name enum_column_name
+)
+language plpgsql
+as $$
+declare
+    vResponseCode INT;
+    vRecord record;
+begin
+    for vRecord in(
+        select sys_person_id, table_name, column_name
+        from sys_column_access_by_person
+    ) loop
+        grant_sys_person_id := sys_column_access_by_person.sys_person_id;
+        grant_table_name := sys_column_access_by_person.table_name;
+        grant_column_name := sys_column_access_by_person.column_name;
+        return next;
+    end loop
+    return vResponseCode;
+end; $$
+
 -- temp, doesn't use group security. need to research the best way to produce view
 create materialized view if not exists sys_column_security
 as
-    select sys_users.sys_person_id, sys_column_access_by_user.table_name, sys_column_access_by_user.column_name
-    from sys_users
-    left join sys_column_access_by_user
-    on sys_users.sys_person_id = sys_column_access_by_user.sys_person_id
-    where sys_column_access_by_user.column_name is not null
+    select *
+    from fun_column_security
 with no data;
 
-create unique index if not exists pk_sys_column_security on sys_column_security ("sys_person_id", "table_name", "column_name");
+create unique index if not exists pk_sys_column_security on sys_column_security ("grant_sys_person_id", "grant_table_name", "grant_column_name");
 
 REFRESH MATERIALIZED VIEW sys_column_security;
 
