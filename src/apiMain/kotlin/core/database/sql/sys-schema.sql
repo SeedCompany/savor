@@ -302,40 +302,14 @@ create table if not exists sys_tokens (
 
 -- VIEWS ----------------------------------------------------------------------
 
-create or replace function fun_column_security(
-    in pRoleName varchar(255)
-)
-returns table(
-    grant_sys_person_id int,
-    grant_table_name enum_table_name,
-    grant_column_name enum_column_name
-)
-language plpgsql
-as $$
-declare
-    vResponseCode INT;
-    vRecord record;
-begin
-    for vRecord in(
-        select sys_person_id, table_name, column_name
-        from sys_column_access_by_person
-    ) loop
-        grant_sys_person_id := sys_column_access_by_person.sys_person_id;
-        grant_table_name := sys_column_access_by_person.table_name;
-        grant_column_name := sys_column_access_by_person.column_name;
-        return next;
-    end loop
-    return vResponseCode;
-end; $$
-
 -- temp, doesn't use group security. need to research the best way to produce view
 create materialized view if not exists sys_column_security
 as
-    select *
-    from fun_column_security
+    select sys_person_id, table_name, column_name
+    from sys_column_access_by_person
 with no data;
 
-create unique index if not exists pk_sys_column_security on sys_column_security ("grant_sys_person_id", "grant_table_name", "grant_column_name");
+create unique index if not exists pk_sys_column_security on sys_column_security ("sys_person_id", "table_name", "column_name");
 
 REFRESH MATERIALIZED VIEW sys_column_security;
 
