@@ -29,11 +29,11 @@ class Database(
         // load schema and initial data - commands are idempotent
         val sysSchema = File("./src/apiMain/kotlin/core/database/sql/sys-schema.sql").readText()
         val scSchema = File("./src/apiMain/kotlin/core/database/sql/sc-schema.sql").readText()
-        val data = File("./src/apiMain/kotlin/core/database/sql/sys-schema.sql").readText()
+        //val data = File("./src/apiMain/kotlin/core/database/sql/sys-schema.sql").readText()
 
         statement.execute(sysSchema)
         statement.execute(scSchema)
-        statement.execute(data)
+        //statement.execute(data)
 
         statement.close()
     }
