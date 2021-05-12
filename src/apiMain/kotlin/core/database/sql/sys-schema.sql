@@ -325,3 +325,30 @@ with no data;
 create unique index if not exists pk_sys_row_security on sys_row_security ("sys_person_id", "table_name", "row_id");
 
 REFRESH MATERIALIZED VIEW sys_row_security;
+
+
+-- SECURE TABLES ------------------------------------------------------------------------
+
+create or replace function x_read_sc_people(
+    in pSysPersonId varchar(255)
+)
+returns table(
+    _sys_person_id int,
+	_sc_internal_person_id varchar(32),
+    _public_first_name varchar(32)
+)
+language plpgsql
+as $$
+declare
+    vRecord record;
+begin
+    for vRecord in(
+        select sys_people.sys_person_id, sys_people.public_first_name
+        from sys_people
+    ) loop
+        _sys_person_id := vRecord.sys_person_id;
+        _public_first_name := vRecord.public_first_name;
+		_sc_internal_person_id := 42;
+        return next;
+    end loop;
+end; $$;
