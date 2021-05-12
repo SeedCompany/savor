@@ -346,13 +346,6 @@ create table if not exists sc_person_unavailabilities (
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
-create table if not exists sc_roles_ext_sys_groups (
-    sys_group_id int primary key,
-    name varchar(255) unique not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	foreign key (sys_group_id) references sys_groups(sys_group_id)
-);
-
 -- FILES & DIRECTORIES ----------------------------------------------------------
 
 create table if not exists sc_directories (

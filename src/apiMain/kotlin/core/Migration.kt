@@ -346,14 +346,12 @@ class Migration (
             SELECT sys_group_id 
             FROM sys_groups
             INTO vSysGroupId
-            WHERE sys_groups.name = CONCAT('SC ', pRoleName);
+            WHERE sys_groups.name = pRoleName AND sys_groups.type = 'SC Global Role';
             IF NOT found THEN
                 INSERT INTO sys_groups("name", "type")
-                VALUES (CONCAT('SC ', pRoleName), 'SC Global Role')
+                VALUES (pRoleName, 'SC Global Role')
                 RETURNING sys_group_id
                 INTO vSysGroupId;
-                INSERT INTO sc_roles_ext_sys_groups("sys_group_id", "name")
-                VALUES (vSysGroupId, pRoleName);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 1;
@@ -376,16 +374,16 @@ class Migration (
             vSysGroupId INT;
         begin
             SELECT sys_group_id 
-            FROM sc_roles_ext_sys_groups
+            FROM sys_groups
             INTO vSysGroupId
-            WHERE sc_roles_ext_sys_groups.name = pRoleName;
+            WHERE sys_groups.name = pRoleName AND sys_groups.type = 'SC Global Role';
             IF FOUND THEN
                 SELECT sys_person_id
                 FROM sc_people_ext_sys_people
                 INTO vSysPersonId
                 WHERE sc_people_ext_sys_people.sc_internal_person_id = pInternalId;
                 IF FOUND THEN
-                    INSERT INTO sys_group_memberships_by_user("sys_person_id", "sys_group_id")
+                    INSERT INTO sys_group_membership_by_person("sys_person_id", "sys_group_id")
                     VALUES (vSysPersonId, vSysGroupId);
                     vResponseCode := 0;
                 ELSE

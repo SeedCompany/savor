@@ -18,7 +18,7 @@ DO $$ BEGIN
         'sys_column_access_by_group',
         'sys_column_access_by_user',
         'sys_groups',
-        'sys_group_memberships_by_user',
+        'sys_group_membership_by_person',
 		'sys_people',
 		'sys_row_access_by_group',
 		'sys_row_access_by_user',
@@ -208,7 +208,7 @@ create table if not exists sys_people (
     foreign key (primary_sys_group_id) references sys_groups(sys_group_id)
 );
 
-create table if not exists sys_user_to_organization(
+create table if not exists sys_person_to_organization(
 	sys_person_id int not null,
 	sys_group_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -218,7 +218,7 @@ create table if not exists sys_user_to_organization(
 	foreign key (sys_group_id) references sys_groups(sys_group_id)
 );
 
-create table if not exists sys_user_to_locations(
+create table if not exists sys_person_to_locations(
 	sys_person_id int not null,
 	sys_location_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -227,7 +227,7 @@ create table if not exists sys_user_to_locations(
     foreign key (sys_location_id) references sys_locations(sys_location_id)
 );
 
-create table if not exists sys_group_memberships_by_user(
+create table if not exists sys_group_membership_by_person(
 	sys_person_id int not null,
 	sys_group_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -315,11 +315,11 @@ REFRESH MATERIALIZED VIEW sys_column_security;
 
 create materialized view if not exists sys_row_security
     as
-    select sys_users.sys_person_id, sys_row_access_by_user.table_name, sys_row_access_by_user.row_id
-    from sys_users
-    left join sys_row_access_by_user
-    on sys_users.sys_person_id = sys_row_access_by_user.sys_person_id
-    where sys_row_access_by_user.row_id is not null
+    select sys_people.sys_person_id, sys_row_access_by_person.table_name, sys_row_access_by_person.row_id
+    from sys_people
+    left join sys_row_access_by_person
+    on sys_people.sys_person_id = sys_row_access_by_person.sys_person_id
+    where sys_row_access_by_person.row_id is not null
 with no data;
 
 create unique index if not exists pk_sys_row_security on sys_row_security ("sys_person_id", "table_name", "row_id");
