@@ -36,7 +36,7 @@ class Organization (conn: Connection) {
     init {
         val statement = conn.createStatement()
 
-        statement.execute(this.scAddOrgProc)
+//        statement.execute(this.scAddOrgProc)
 
         statement.close()
     }

@@ -183,11 +183,11 @@ class Authorization (conn: Connection) {
     init {
         val statement = conn.createStatement()
 
-        statement.execute(this.sysAddMemberProc)
-        statement.execute(this.sysAddColumnAccessForUserProc)
-        statement.execute(this.sysAddColumnAccessForGroupProc)
-        statement.execute(this.sysAddRowAccessForUserProc)
-        statement.execute(this.sysAddRowAccessForGroupProc)
+//        statement.execute(this.sysAddMemberProc)
+//        statement.execute(this.sysAddColumnAccessForUserProc)
+//        statement.execute(this.sysAddColumnAccessForGroupProc)
+//        statement.execute(this.sysAddRowAccessForUserProc)
+//        statement.execute(this.sysAddRowAccessForGroupProc)
 
         statement.close()
     }

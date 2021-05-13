@@ -41,7 +41,7 @@ class User ( conn: Connection) {
     init {
         val statement = conn.createStatement()
 
-        statement.execute(this.scAddUserProc)
+//        statement.execute(this.scAddUserProc)
 //        statement.execute(this.secureRead)
 
         statement.close()
