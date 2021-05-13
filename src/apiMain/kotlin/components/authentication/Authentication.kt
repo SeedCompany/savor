@@ -15,20 +15,20 @@ class Authentication ( val conn: Connection) {
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
-            vEmail VARCHAR(255);
-            vId INT;
+            vSysPersonId INT;
         begin
-            SELECT email 
+            SELECT sys_person_id 
             FROM sys_users
-            INTO vEmail
+            INTO vSysPersonId
             WHERE sys_users.email = pEmail;
             IF NOT found THEN
-                INSERT INTO sys_users("email", "password")
-                VALUES (pEmail, pPassword)
-                RETURNING sys_user_id
-                INTO vId;
-                INSERT INTO sys_tokens("token", "sys_user_id")
-                VALUES (pToken, vId);
+                INSERT INTO sys_people VALUES (null)
+                RETURNING sys_person_id
+                INTO vSysPersonId;
+                INSERT INTO sys_users("sys_person_id", "email", "password")
+                VALUES (vSysPersonId, pEmail, pPassword);
+                INSERT INTO sys_tokens("token", "sys_person_id")
+                VALUES (pToken, vSysPersonId);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 1;
@@ -56,8 +56,8 @@ class Authentication ( val conn: Connection) {
             INTO vRow
             WHERE sys_users.email = pEmail AND sys_users.password = pPassword;
             IF found THEN
-                INSERT INTO sys_tokens("token", "sys_user_id")
-                VALUES (pToken, vRow.sys_user_id);
+                INSERT INTO sys_tokens("token", "sys_person_id")
+                VALUES (pToken, vRow.sys_person_id);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;

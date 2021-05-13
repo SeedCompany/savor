@@ -14,9 +14,10 @@ class Migration (
 
 
     fun migrate(){
-        this.migrateOrganizations()
-        this.migrateUsers()
-        this.migrateRoles()
+//        this.migrateOrganizations()
+//        this.migrateUsers()
+//        this.migrateRoles()
+        this.migrateEthnologue()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -522,5 +523,145 @@ class Migration (
 
     }
 
+    // LANGUAGES ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    val migrateEthnologueProc = """
+        create or replace function migrate_ethnologue_proc(
+            in pInternalId varchar(32),
+            in pISO639 char(3),
+            in pLanguageName varchar(50),
+            in pPopulation int,
+            in provisionalCode varchar(32)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vSysEthnologueId INT;
+        begin
+            SELECT sys_ethnologue_id 
+            FROM sil_table_of_languages
+            INTO vSysEthnologueId
+            WHERE sil_table_of_languages.sys_ethnologue_legacy_id = pInternalId;
+            IF NOT found THEN
+                INSERT INTO sil_table_of_languages("sys_ethnologue_legacy_id","ISO_639","code","Language_Name","population","provisional_code")
+                VALUES (pInternalId, pISO639, provisionalCode, pLanguageName, pPopulation, provisionalCode)
+                RETURNING sys_ethnologue_id
+                INTO vSysEthnologueId;
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 1;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.migrateEthnologueProc)
+        statement.close()
+    }
+
+    private fun migrateEthnologue(){
+
+        //language=SQL
+        val createEthnologueSQL = this.connection.prepareStatement("""
+            select migrate_ethnologue_proc from migrate_ethnologue_proc(?, ?, ?, ?, ?);
+        """.trimIndent()
+        )
+
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nEthnologue ")
+            val result = it.run(
+                "match (n:EthnologueLanguage) return count(n) as eth"
+            )
+
+            while (result.hasNext()){
+                val record = result.next()
+                count = record.get("eth").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i+1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:EthnologueLanguage)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        return 
+                            n.id as ethId, 
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt
+                    """.trimIndent()
+                )
+
+                var ethId: String? = null
+
+                var ISO_639: String? = null
+                var provisionalCode: String? = null
+                var name: String? = null
+                var population: Int? = null
+
+                while (getUserResult.hasNext()){
+                    val record = getUserResult.next()
+
+                    ethId = record.get("ethId").asString()
+                    val propName = record.get("propName").asString()
+
+                    when(propName){
+                        "code" -> {
+//                            about = record.get("propValue").asString()
+                        }
+                        "provisionalCode" -> {
+//                            email = record.get("propValue").asString()
+                        }
+                        "population" -> {
+//                            displayFirstName = record.get("propValue").asString()
+                        }
+                        "name" -> {
+//                            displayLastName = record.get("propValue").asString()
+                        }
+                        "canDelete" -> {}
+                        else -> {
+                            print("userId $ethId: failed to recognize property $propName ")
+                        }
+                    }
+                }
+
+                it.commit()
+                it.close()
+
+                // write to postgres
+//                createEthnologueSQL.setString(1, userId)
+//                createEthnologueSQL.setString(2, about)
+//                createEthnologueSQL.setString(3, email)
+//                createEthnologueSQL.setString(4, realFirstName)
+//                createEthnologueSQL.setString(5, realLastName)
+//                createEthnologueSQL.setString(6, password)
+//                createEthnologueSQL.setString(7, phone)
+//                createEthnologueSQL.setString(8, displayFirstName)
+//                createEthnologueSQL.setString(9, displayLastName)
+//                createEthnologueSQL.setString(10, status)
+//                createEthnologueSQL.setString(11, timezone)
+//                createEthnologueSQL.setString(12, title)
+
+                val createResult = createEthnologueSQL.executeQuery()
+                createResult.next()
+                val returnCode = createResult.getInt(1)
+                print("internal user id: $ethId returnCode: $returnCode ")
+                createResult.close()
+            }
+        }
+    }
 }

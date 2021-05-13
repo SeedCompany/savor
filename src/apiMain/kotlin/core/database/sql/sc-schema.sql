@@ -285,7 +285,7 @@ create table if not exists sc_language_goal_definitions (
 );
 
 create table if not exists sc_languages (
-	ISO_639 char(3) primary key,
+	sys_ethnologue_id int primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	is_dialect bool,
 	is_sign_language bool,
@@ -298,23 +298,24 @@ create table if not exists sc_languages (
 	sensitivity sc_enum_sensitivity,
 	sign_language_code varchar(32),
 	sponsor_estimated_eng_date timestamp,
-	foreign key (ISO_639) references sil_table_of_languages(ISO_639)
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id)
 );
 
 create table if not exists sc_language_locations (
-	ISO_639 char(3) not null,
+	sys_ethnologue_id int not null,
 	sys_location_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (ISO_639, sys_location_id)
+	primary key (sys_ethnologue_id, sys_location_id),
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id)
 	-- todo
 );
 
 create table if not exists sc_language_goals (
-    ISO_639 char(3) not null,
+    sys_ethnologue_id int not null,
 	sc_goal_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (ISO_639, sc_goal_id),
-	foreign key (ISO_639) references sil_table_of_languages(ISO_639)
+	primary key (sys_ethnologue_id, sc_goal_id),
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id)
 	-- todo
 );
 
@@ -322,10 +323,10 @@ create table if not exists sc_language_goals (
 
 create table if not exists sc_known_languages_by_person (
     sys_person_id int not null,
-    known_language_ISO_639 char(3) not null,
+    known_language_sys_ethnologue_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	foreign key (sys_person_id) references sys_people(sys_person_id),
-	foreign key (known_language_ISO_639) references sil_table_of_languages(ISO_639)
+	foreign key (known_language_sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id)
 );
 
 create table if not exists sc_people_ext_sys_people (
@@ -490,7 +491,7 @@ create table if not exists sc_project_member_roles (
 
 create table if not exists sc_language_engagements (
 	project_sys_group_id int not null,
-	ISO_639 char(3) not null,
+	sys_ethnologue_id int not null,
 	sc_change_to_plan_id int not null default 0,
     active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -512,8 +513,8 @@ create table if not exists sc_language_engagements (
 	start_date_override timestamp,
 	status sc_enum_engagement_status,
 	updated_at timestamp,
-	primary key (project_sys_group_id, ISO_639, sc_change_to_plan_id),
-	foreign key (ISO_639) references sil_table_of_languages(ISO_639),
+	primary key (project_sys_group_id, sys_ethnologue_id, sc_change_to_plan_id),
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id),
 	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (pnp_sc_file_version_id) references sc_file_versions(sc_file_version_id),
 	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
@@ -547,7 +548,7 @@ create table if not exists sc_product_scripture_references (
 
 create table if not exists sc_internship_engagements (
 	project_sys_group_id int not null,
-	ISO_639 char(3) not null,
+	sys_ethnologue_id int not null,
 	sc_change_to_plan_id int not null default 0,
     active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -569,8 +570,8 @@ create table if not exists sc_internship_engagements (
 	start_date_override timestamp,
 	status sc_enum_engagement_status,
 	updated_at timestamp,
-	primary key (project_sys_group_id, ISO_639, sc_change_to_plan_id),
-	foreign key (ISO_639) references sil_table_of_languages(ISO_639),
+	primary key (project_sys_group_id, sys_ethnologue_id, sc_change_to_plan_id),
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id),
 	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (country_of_origin_sys_location_id) references sys_locations(sys_location_id),
 	foreign key (growth_plan_sc_file_version_id) references sc_file_versions(sc_file_version_id),
@@ -582,13 +583,13 @@ create table if not exists sc_internship_engagements (
 create table if not exists sc_ceremonies (
     sc_ceremony_id serial primary key,
     project_sys_group_id int not null,
-	ISO_639 char(3) not null,
+	sys_ethnologue_id int not null,
 	actual_date timestamp,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	estimated_date timestamp,
 	is_planned bool,
 	type varchar(255),
-	foreign key (ISO_639) references sil_table_of_languages(ISO_639),
+	foreign key (sys_ethnologue_id) references sil_table_of_languages(sys_ethnologue_id),
     foreign key (project_sys_group_id) references sys_groups(sys_group_id)
 );
 

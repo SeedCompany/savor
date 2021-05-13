@@ -176,7 +176,9 @@ create table if not exists sys_locations (
 -- todo: map the 3 SIL tables:
 -- http://www.ethnologue.com/sites/default/files/Ethnologue-19-Global%20Dataset%20Doc.pdf
 create table if not exists sil_table_of_languages (
-	ISO_639 char(3) primary key,
+    sys_ethnologue_id serial primary key,
+    sys_ethnologue_legacy_id varchar(32),
+	ISO_639 char(3),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	code varchar(32),
 	Language_Name varchar(50) not null,
@@ -185,13 +187,6 @@ create table if not exists sil_table_of_languages (
 );
 
 -- USERS + GROUPS ------------------------------------------------------------
-
-create table if not exists sys_users(
-	sys_person_id serial primary key,
-	email varchar(255) unique not null,
-	password varchar(255) not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP
-);
 
 create table if not exists sys_groups(
 	sys_group_id serial primary key,
@@ -217,6 +212,14 @@ create table if not exists sys_people (
     time_zone varchar(32),
     title varchar(255),
     foreign key (primary_sys_group_id) references sys_groups(sys_group_id)
+);
+
+create table if not exists sys_users(
+	sys_person_id int primary key,
+	email varchar(255) unique not null,
+	password varchar(255) not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
 create table if not exists sys_person_to_organization(
