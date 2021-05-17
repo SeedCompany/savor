@@ -178,10 +178,10 @@ create table if not exists sys_locations (
 create table if not exists sil_table_of_languages (
     sys_ethnologue_id serial primary key,
     sys_ethnologue_legacy_id varchar(32),
-	ISO_639 char(3),
+	iso_639 char(3),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	code varchar(32),
-	Language_Name varchar(50) not null,
+	language_name varchar(50) not null,
 	population int,
 	provisional_code varchar(32)
 );

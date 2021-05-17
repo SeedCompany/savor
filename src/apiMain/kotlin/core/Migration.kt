@@ -2,6 +2,8 @@ package core
 
 import core.database.Neo4j
 import java.sql.Connection
+import java.sql.SQLType
+import java.sql.Types
 
 import java.time.ZonedDateTime
 
@@ -17,7 +19,7 @@ class Migration (
 //        this.migrateOrganizations()
 //        this.migrateUsers()
 //        this.migrateRoles()
-        this.migrateEthnologue()
+//        this.migrateEthnologue()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -545,7 +547,7 @@ class Migration (
             INTO vSysEthnologueId
             WHERE sil_table_of_languages.sys_ethnologue_legacy_id = pInternalId;
             IF NOT found THEN
-                INSERT INTO sil_table_of_languages("sys_ethnologue_legacy_id","ISO_639","code","Language_Name","population","provisional_code")
+                INSERT INTO sil_table_of_languages("sys_ethnologue_legacy_id","iso_639","code","language_name","population","provisional_code")
                 VALUES (pInternalId, pISO639, provisionalCode, pLanguageName, pPopulation, provisionalCode)
                 RETURNING sys_ethnologue_id
                 INTO vSysEthnologueId;
@@ -621,20 +623,26 @@ class Migration (
 
                     when(propName){
                         "code" -> {
-//                            about = record.get("propValue").asString()
+                            if (!record.get("propValue").isNull){
+                                ISO_639 = record.get("propValue").asString()
+                            }
                         }
                         "provisionalCode" -> {
-//                            email = record.get("propValue").asString()
+                            if (!record.get("propValue").isNull){
+                                provisionalCode = record.get("propValue").asString()
+                            }
                         }
                         "population" -> {
-//                            displayFirstName = record.get("propValue").asString()
+                            if (!record.get("propValue").isNull){
+                                population = record.get("propValue").asInt()
+                            }
                         }
                         "name" -> {
-//                            displayLastName = record.get("propValue").asString()
+                            name = record.get("propValue").asString()
                         }
                         "canDelete" -> {}
                         else -> {
-                            print("userId $ethId: failed to recognize property $propName ")
+                            print("ethId $ethId: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -643,23 +651,216 @@ class Migration (
                 it.close()
 
                 // write to postgres
-//                createEthnologueSQL.setString(1, userId)
-//                createEthnologueSQL.setString(2, about)
-//                createEthnologueSQL.setString(3, email)
-//                createEthnologueSQL.setString(4, realFirstName)
-//                createEthnologueSQL.setString(5, realLastName)
-//                createEthnologueSQL.setString(6, password)
-//                createEthnologueSQL.setString(7, phone)
-//                createEthnologueSQL.setString(8, displayFirstName)
-//                createEthnologueSQL.setString(9, displayLastName)
-//                createEthnologueSQL.setString(10, status)
-//                createEthnologueSQL.setString(11, timezone)
-//                createEthnologueSQL.setString(12, title)
+                createEthnologueSQL.setString(1, ethId)
+
+                if (ISO_639 != null) {
+                    createEthnologueSQL.setString(2, ISO_639)
+                } else {
+                    createEthnologueSQL.setNull(2, Types.NULL)
+                }
+
+                createEthnologueSQL.setString(3, name)
+
+                if (population != null) {
+                    createEthnologueSQL.setInt(4, population)
+                } else {
+                    createEthnologueSQL.setNull(4, Types.NULL)
+                }
+
+                if (provisionalCode != null) {
+                    createEthnologueSQL.setString(5, provisionalCode)
+                } else {
+                    createEthnologueSQL.setNull(5, Types.NULL)
+                }
 
                 val createResult = createEthnologueSQL.executeQuery()
                 createResult.next()
                 val returnCode = createResult.getInt(1)
-                print("internal user id: $ethId returnCode: $returnCode ")
+                print("internal ethId: $ethId returnCode: $returnCode ")
+                createResult.close()
+            }
+        }
+    }
+
+    val migrateLanguagesProc = """
+        create or replace function migrate_languages_proc(
+            in pInternalId varchar(32),
+            in pISO639 char(3),
+            in pLanguageName varchar(50),
+            in pPopulation int,
+            in provisionalCode varchar(32)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vSysEthnologueId INT;
+        begin
+            SELECT sys_ethnologue_id 
+            FROM sil_table_of_languages
+            INTO vSysEthnologueId
+            WHERE sil_table_of_languages.sys_ethnologue_legacy_id = pInternalId;
+            IF NOT found THEN
+                INSERT INTO sil_table_of_languages("sys_ethnologue_legacy_id","iso_639","code","language_name","population","provisional_code")
+                VALUES (pInternalId, pISO639, provisionalCode, pLanguageName, pPopulation, provisionalCode)
+                RETURNING sys_ethnologue_id
+                INTO vSysEthnologueId;
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 1;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.migrateLanguagesProc)
+        statement.close()
+    }
+
+    private fun migrateLanguages(){
+
+        //language=SQL
+        val createEthnologueSQL = this.connection.prepareStatement("""
+            select migrate_languages_proc from migrate_languages_proc(?, ?, ?, ?, ?);
+        """.trimIndent()
+        )
+
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nLanguages ")
+            val result = it.run(
+                "match (n:Language) return count(n) as lang"
+            )
+
+            while (result.hasNext()){
+                val record = result.next()
+                count = record.get("lang").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i+1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:Language)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        return 
+                            n.id as langId, 
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt
+                    """.trimIndent()
+                )
+
+                var langId: String? = null
+
+                var isDialect: Boolean? = null
+                var isSign: Boolean? = null
+                var isLeast: Boolean? = null
+                var displayName: String? = null
+                var leastReason: String? = null
+                var name: String? = null
+                var popOverride: Int? = null
+                var rogCode: String? = null
+                var sensitivity: String? = null
+                var signCode: String? = null
+                var sponsorEngDate: String? = null
+
+
+                while (getUserResult.hasNext()){
+                    val record = getUserResult.next()
+
+                    langId = record.get("langId").asString()
+                    val propName = record.get("propName").asString()
+
+                    when(propName){
+                        "isDialect" -> {
+                            if (!record.get("propValue").isNull){
+                                isDialect = record.get("propValue").asBoolean()
+                            }
+                        }
+                        "isSignLanguage" -> {
+                            if (!record.get("propValue").isNull){
+                                isSign = record.get("propValue").asBoolean()
+                            }
+                        }
+                        "leastOfThese" -> {
+                            if (!record.get("propValue").isNull){
+                                isLeast = record.get("propValue").asBoolean()
+                            }
+                        }
+                        "displayName" -> {
+                            displayName = record.get("propValue").asString()
+                        }
+                        "leastOfTheseReason" -> {
+                            leastReason = record.get("propValue").asString()
+                        }
+                        "name" -> {
+                            name = record.get("propValue").asString()
+                        }
+                        "populationOverride" -> {
+                            popOverride = record.get("propValue").asInt()
+                        }
+                        "registryOfDialectsCode" -> {
+                            rogCode = record.get("propValue").asString()
+                        }
+                        "sensitivity" -> {
+                            sensitivity = record.get("propValue").asString()
+                        }
+                        "signLanguageCode" -> {
+                            signCode = record.get("propValue").asString()
+                        }
+                        "sponsorEstimatedEndDate" -> {
+                            sponsorEngDate = record.get("propValue").asString()
+                        }
+                        "canDelete" -> {}
+                        else -> {
+                            print("lang $langId: failed to recognize property $propName ")
+                        }
+                    }
+                }
+
+                it.commit()
+                it.close()
+
+                // write to postgres
+                createEthnologueSQL.setString(1, ethId)
+
+                if (ISO_639 != null) {
+                    createEthnologueSQL.setString(2, ISO_639)
+                } else {
+                    createEthnologueSQL.setNull(2, Types.NULL)
+                }
+
+                createEthnologueSQL.setString(3, name)
+
+                if (population != null) {
+                    createEthnologueSQL.setInt(4, population)
+                } else {
+                    createEthnologueSQL.setNull(4, Types.NULL)
+                }
+
+                if (provisionalCode != null) {
+                    createEthnologueSQL.setString(5, provisionalCode)
+                } else {
+                    createEthnologueSQL.setNull(5, Types.NULL)
+                }
+
+                val createResult = createEthnologueSQL.executeQuery()
+                createResult.next()
+                val returnCode = createResult.getInt(1)
+                print("internal ethId: $ethId returnCode: $returnCode ")
                 createResult.close()
             }
         }
