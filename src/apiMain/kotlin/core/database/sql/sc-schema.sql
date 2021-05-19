@@ -290,7 +290,7 @@ create table if not exists sc_languages (
 	is_dialect bool,
 	is_sign_language bool,
 	is_least_of_these bool,
-	display_name varchar(255) unique not null,
+--	display_name varchar(255) unique not null,
 	least_of_these_reason varchar(255),
 	name varchar(255) unique not null,
 	population_override int,

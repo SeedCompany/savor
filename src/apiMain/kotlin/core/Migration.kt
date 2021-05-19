@@ -2,7 +2,6 @@ package core
 
 import core.database.Neo4j
 import java.sql.Connection
-import java.sql.SQLType
 import java.sql.Types
 
 import java.time.ZonedDateTime
@@ -20,6 +19,7 @@ class Migration (
 //        this.migrateUsers()
 //        this.migrateRoles()
 //        this.migrateEthnologue()
+        this.migrateLanguages()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,14 +601,14 @@ class Migration (
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
                         return 
-                            n.id as ethId, 
+                            n.id as id, 
                             type(r) as propName, 
                             prop.value as propValue, 
                             prop.createdAt as createdAt
                     """.trimIndent()
                 )
 
-                var ethId: String? = null
+                var id: String? = null
 
                 var ISO_639: String? = null
                 var provisionalCode: String? = null
@@ -618,7 +618,7 @@ class Migration (
                 while (getUserResult.hasNext()){
                     val record = getUserResult.next()
 
-                    ethId = record.get("ethId").asString()
+                    id = record.get("id").asString()
                     val propName = record.get("propName").asString()
 
                     when(propName){
@@ -642,7 +642,7 @@ class Migration (
                         }
                         "canDelete" -> {}
                         else -> {
-                            print("ethId $ethId: failed to recognize property $propName ")
+                            print("ethId $id: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -651,7 +651,7 @@ class Migration (
                 it.close()
 
                 // write to postgres
-                createEthnologueSQL.setString(1, ethId)
+                createEthnologueSQL.setString(1, id)
 
                 if (ISO_639 != null) {
                     createEthnologueSQL.setString(2, ISO_639)
@@ -676,7 +676,7 @@ class Migration (
                 val createResult = createEthnologueSQL.executeQuery()
                 createResult.next()
                 val returnCode = createResult.getInt(1)
-                print("internal ethId: $ethId returnCode: $returnCode ")
+                print("internal ethId: $id returnCode: $returnCode ")
                 createResult.close()
             }
         }
@@ -684,31 +684,28 @@ class Migration (
 
     val migrateLanguagesProc = """
         create or replace function migrate_languages_proc(
-            in pInternalId varchar(32),
-            in pISO639 char(3),
-            in pLanguageName varchar(50),
-            in pPopulation int,
-            in provisionalCode varchar(32)
+            in pEthName varchar(50),
+            in pLangName varchar(255)
         )
         returns INT
         language plpgsql
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
-            vSysEthnologueId INT;
+            vEthId INT;
         begin
             SELECT sys_ethnologue_id 
             FROM sil_table_of_languages
-            INTO vSysEthnologueId
-            WHERE sil_table_of_languages.sys_ethnologue_legacy_id = pInternalId;
-            IF NOT found THEN
-                INSERT INTO sil_table_of_languages("sys_ethnologue_legacy_id","iso_639","code","language_name","population","provisional_code")
-                VALUES (pInternalId, pISO639, provisionalCode, pLanguageName, pPopulation, provisionalCode)
+            INTO vEthId
+            WHERE sil_table_of_languages.language_name = pEthName;
+            IF found THEN
+                INSERT INTO sc_languages("sys_ethnologue_id","name")
+                VALUES (vEthId, pLangName)
                 RETURNING sys_ethnologue_id
-                INTO vSysEthnologueId;
+                INTO vEthId;
                 vResponseCode := 0;
             ELSE
-                vResponseCode := 1;
+                vResponseCode := 2;
             END IF;
             return vResponseCode;
         end; ${'$'}${'$'}
@@ -723,8 +720,8 @@ class Migration (
     private fun migrateLanguages(){
 
         //language=SQL
-        val createEthnologueSQL = this.connection.prepareStatement("""
-            select migrate_languages_proc from migrate_languages_proc(?, ?, ?, ?, ?);
+        val createLanguageSQL = this.connection.prepareStatement("""
+            select migrate_languages_proc from migrate_languages_proc(?, ?);
         """.trimIndent()
         )
 
@@ -733,12 +730,12 @@ class Migration (
         neo4j.driver.session().readTransaction {
             print("\nLanguages ")
             val result = it.run(
-                "match (n:Language) return count(n) as lang"
+                "match (n:Language) return count(n) as count"
             )
 
             while (result.hasNext()){
                 val record = result.next()
-                count = record.get("lang").asInt()
+                count = record.get("count").asInt()
                 print("Count: $count \n")
             }
 
@@ -755,78 +752,41 @@ class Migration (
                         skip $i
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:ethnologue {active: true}]->(eth:EthnologueLanguage)
+                        -[:name {active: true}]->(ethName:Property) 
                         return 
-                            n.id as langId, 
+                            n.id as id, 
                             type(r) as propName, 
                             prop.value as propValue, 
-                            prop.createdAt as createdAt
+                            prop.createdAt as createdAt,
+                            ethName.value as ethNameValue
                     """.trimIndent()
                 )
 
-                var langId: String? = null
-
-                var isDialect: Boolean? = null
-                var isSign: Boolean? = null
-                var isLeast: Boolean? = null
-                var displayName: String? = null
-                var leastReason: String? = null
-                var name: String? = null
-                var popOverride: Int? = null
-                var rogCode: String? = null
-                var sensitivity: String? = null
-                var signCode: String? = null
-                var sponsorEngDate: String? = null
-
+                // var langId: String? = null
+                var ethName: String? = null
+                var langName: String? = null
 
                 while (getUserResult.hasNext()){
                     val record = getUserResult.next()
 
-                    langId = record.get("langId").asString()
+                    // langId = record.get("langId").asString()
                     val propName = record.get("propName").asString()
-
+                    ethName = record.get("ethNameValue").asString()
                     when(propName){
-                        "isDialect" -> {
-                            if (!record.get("propValue").isNull){
-                                isDialect = record.get("propValue").asBoolean()
-                            }
-                        }
-                        "isSignLanguage" -> {
-                            if (!record.get("propValue").isNull){
-                                isSign = record.get("propValue").asBoolean()
-                            }
-                        }
-                        "leastOfThese" -> {
-                            if (!record.get("propValue").isNull){
-                                isLeast = record.get("propValue").asBoolean()
-                            }
-                        }
-                        "displayName" -> {
-                            displayName = record.get("propValue").asString()
-                        }
-                        "leastOfTheseReason" -> {
-                            leastReason = record.get("propValue").asString()
-                        }
+//                        "ethNameValue" -> {
+//                            if (!record.get("propValue").isNull){
+//                                ethName = record.get("propValue").asString()
+//                            }
+//                        }
                         "name" -> {
-                            name = record.get("propValue").asString()
+                            if (!record.get("propValue").isNull){
+                                langName = record.get("propValue").asString()
+                            }
                         }
-                        "populationOverride" -> {
-                            popOverride = record.get("propValue").asInt()
-                        }
-                        "registryOfDialectsCode" -> {
-                            rogCode = record.get("propValue").asString()
-                        }
-                        "sensitivity" -> {
-                            sensitivity = record.get("propValue").asString()
-                        }
-                        "signLanguageCode" -> {
-                            signCode = record.get("propValue").asString()
-                        }
-                        "sponsorEstimatedEndDate" -> {
-                            sponsorEngDate = record.get("propValue").asString()
-                        }
-                        "canDelete" -> {}
                         else -> {
-                            print("lang $langId: failed to recognize property $propName ")
+                           // print("lang xxx: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -835,32 +795,33 @@ class Migration (
                 it.close()
 
                 // write to postgres
-                createEthnologueSQL.setString(1, ethId)
+                createLanguageSQL.setString(1, ethName)
+                createLanguageSQL.setString(2, langName)
+//
+//                if (langName != null) {
+//                } else {
+//
+//                     createLanguageSQL.setNull(2, Types.NULL)
+//                }
+//
+//                createLanguageSQL.setString(3, name)
+//
+//                if (population != null) {
+//                    createLanguageSQL.setInt(4, population)
+//                } else {
+//                    createLanguageSQL.setNull(4, Types.NULL)
+//                }
+//
+//                if (provisionalCode != null) {
+//                    createLanguageSQL.setString(5, provisionalCode)
+//                } else {
+//                    createLanguageSQL.setNull(5, Types.NULL)
+//                }
 
-                if (ISO_639 != null) {
-                    createEthnologueSQL.setString(2, ISO_639)
-                } else {
-                    createEthnologueSQL.setNull(2, Types.NULL)
-                }
-
-                createEthnologueSQL.setString(3, name)
-
-                if (population != null) {
-                    createEthnologueSQL.setInt(4, population)
-                } else {
-                    createEthnologueSQL.setNull(4, Types.NULL)
-                }
-
-                if (provisionalCode != null) {
-                    createEthnologueSQL.setString(5, provisionalCode)
-                } else {
-                    createEthnologueSQL.setNull(5, Types.NULL)
-                }
-
-                val createResult = createEthnologueSQL.executeQuery()
+                val createResult = createLanguageSQL.executeQuery()
                 createResult.next()
                 val returnCode = createResult.getInt(1)
-                print("internal ethId: $ethId returnCode: $returnCode ")
+                print("internal ethId: xxx returnCode: $returnCode ")
                 createResult.close()
             }
         }
