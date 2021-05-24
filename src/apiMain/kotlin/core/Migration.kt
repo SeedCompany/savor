@@ -20,8 +20,10 @@ class Migration (
 //        this.migrateRoles()
 //        this.migrateEthnologue()
 //        this.migrateLanguages()
-        this.migratePartners()
+//        this.migratePartners()
 
+//        this.migrateFiles()
+//        this.migrateFileVersions()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -960,30 +962,179 @@ class Migration (
 
     }
 
-    val migrateProjectsProc = """
-        create or replace function migrate_projects_proc(
-            in departmentId varchar(32),
-            in marketingLocation int,
-            in name varchar(32),
-            in primaryLocation int,
+//    val migrateProjectsProc = """
+//        create or replace function migrate_projects_proc(
+//            in departmentId varchar(32),
+//            in marketingLocation int,
+//            in name varchar(32),
+//            in primaryLocation int,
+//        )
+//        returns INT
+//        language plpgsql
+//        as ${'$'}${'$'}
+//        declare
+//            vResponseCode INT;
+//            vProjectId INT;
+//            vPersonId INT;
+//        begin
+//            SELECT sys_group_id
+//            FROM sys_groups
+//            INTO vGroupId
+//            WHERE sys_group_id = pGroupId;
+//            IF found THEN
+//                INSERT INTO sc_partners("sys_group_id","is_global_innovations_client", "pmc_entity_code")
+//                VALUES (vGroupId, globalInnovationsClient, pmcEntityCode)
+//                RETURNING sys_groups.sys_group_id
+//                INTO vGroupId;
+//                vResponseCode := 0;
+//            ELSE
+//                vResponseCode := 2;
+//            END IF;
+//            return vResponseCode;
+//        end; ${'$'}${'$'}
+//    """.trimIndent()
+//
+//    init {
+//        val statement = this.connection.createStatement()
+//        statement.execute(this.migrateProjectsProc)
+//        statement.close()
+//    }
+//
+//
+//    private fun migrateProjects(){
+//
+//    }
+
+
+    val migrateFilesProc = """
+        create or replace function migrate_files_proc(
+           in userPhone varchar(32),
+           in fileName varchar(255)
         )
         returns INT
         language plpgsql
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
-            vProjectId INT;
             vPersonId INT;
         begin
-            SELECT sys_group_id
-            FROM sys_groups
-            INTO vGroupId
-            WHERE sys_group_id = pGroupId;
+            SELECT sp.sys_person_id 
+            FROM sys_people AS sp
+            INTO vPersonId
+            WHERE sp.phone = userPhone;
             IF found THEN
-                INSERT INTO sc_partners("sys_group_id","is_global_innovations_client", "pmc_entity_code")
-                VALUES (vGroupId, globalInnovationsClient, pmcEntityCode)
-                RETURNING sys_groups.sys_group_id
-                INTO vGroupId;
+                INSERT INTO sc_files("creator_sys_person_id", "name")
+                VALUES (vPersonId, fileName);
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 2;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.migrateFilesProc)
+        statement.close()
+    }
+
+    private fun migrateFiles() {
+        val createFileSQL = this.connection.prepareStatement(
+            """
+            select migrate_files_proc from migrate_files_proc(?, ?);
+        """.trimIndent()
+        )
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nFile ")
+            val result = it.run(
+                "match (n:File) return count(n) as count"
+            )
+
+            while (result.hasNext()) {
+                val record = result.next()
+                count = record.get("count").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i + 1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:File)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:createdBy {active: true}]->(user:User)
+                        -[:phone {active: true}]->(userPhone:Property) 
+                        return 
+                            n.id as id,
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt,
+                            userPhone.value as userPhone
+                    """.trimIndent()
+                )
+                var fileName: String? = null
+                var userPhone: String? = null
+
+                while (getUserResult.hasNext()) {
+                    val record = getUserResult.next()
+                    val propName = record.get("propName").asString()
+
+                    userPhone = record.get("userPhone").asString()
+                    when (propName) {
+                        "name" -> {
+                            fileName = record.get("propValue").asString()
+                        }
+                        else -> {
+                            print(" failed to recognize property $propName ")
+                        }
+                    }
+                }
+                it.commit()
+                it.close()
+
+                print("\n $userPhone,$fileName \n")
+
+                createFileSQL.setString(1, userPhone)
+
+                createFileSQL.setString(2, fileName)
+
+                val createResult = createFileSQL.executeQuery()
+                createResult.next()
+                val code = createResult.getInt(1)
+                print(" code:$code")
+                createResult.close()
+            }
+        }
+    }
+
+    val migrateFileVersionProc = """
+        create or replace function migrate_fileversions_proc(
+           in userPhone varchar(32),
+           in fileName varchar(255)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vPersonId INT;
+        begin
+            SELECT sp.sys_person_id 
+            FROM sys_people AS sp
+            INTO vPersonId
+            WHERE sp.phone = userPhone;
+            IF found THEN
+                INSERT INTO sc_files("creator_sys_person_id", "name")
+                VALUES (vPersonId, fileName);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -992,16 +1143,14 @@ class Migration (
         end; ${'$'}${'$'}
     """.trimIndent()
 
-    init {
+    init{
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateProjectsProc)
+        statement.execute(this.migrateFileVersionProc)
         statement.close()
     }
 
 
-    private fun migrateProjects(){
 
-    }
 
 }
 

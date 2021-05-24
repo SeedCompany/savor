@@ -360,8 +360,8 @@ create table if not exists sc_files (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	creator_sys_person_id int not null,
 	name varchar(255),
-    sc_directory_id int not null,
-	foreign key (sc_directory_id) references sc_directories(sc_directory_id),
+--    sc_directory_id int not null,
+--	foreign key (sc_directory_id) references sc_directories(sc_directory_id),
 	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
 );
 
