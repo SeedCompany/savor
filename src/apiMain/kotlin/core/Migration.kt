@@ -14,12 +14,14 @@ class Migration (
 ) {
 
 
-    fun migrate(){
+    fun migrate() {
 //        this.migrateOrganizations()
 //        this.migrateUsers()
 //        this.migrateRoles()
 //        this.migrateEthnologue()
-        this.migrateLanguages()
+//        this.migrateLanguages()
+        this.migratePartners()
+
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,10 +64,11 @@ class Migration (
         statement.close()
     }
 
-    private fun migrateOrganizations(){
+    private fun migrateOrganizations() {
 
         //language=SQL
-        val callFun = this.connection.prepareStatement("""
+        val callFun = this.connection.prepareStatement(
+            """
             select migrate_org_proc from migrate_org_proc(?, ?, ?);
         """.trimIndent()
         )
@@ -75,10 +78,10 @@ class Migration (
         neo4j.driver.session().readTransaction {
             print("Organizations ")
             val result = it.run(
-            "match (n:Organization) return count(n) as orgs"
+                "match (n:Organization) return count(n) as orgs"
             )
 
-            while (result.hasNext()){
+            while (result.hasNext()) {
                 val record = result.next()
                 count = record.get("orgs").asInt()
                 print("Count: $count ")
@@ -89,7 +92,7 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print("\n${i+1} ")
+                print("\n${i + 1} ")
                 val getOrgResult = it.run(
                     """
                         match (n:Organization)
@@ -111,13 +114,13 @@ class Migration (
                 var orgName: String? = null
                 var orgNameCreatedAt: ZonedDateTime? = null
 
-                while (getOrgResult.hasNext()){
+                while (getOrgResult.hasNext()) {
                     val record = getOrgResult.next()
 
                     orgId = record.get("orgId").asString()
                     val propName = record.get("propName").asString()
 
-                    when (propName){
+                    when (propName) {
                         "address" -> {
                             orgAddress = record.get("propValue").asString()
                             orgAddressCreatedAt = record.get("createdAt").asZonedDateTime()
@@ -126,7 +129,8 @@ class Migration (
                             orgName = record.get("propValue").asString()
                             orgNameCreatedAt = record.get("createdAt").asZonedDateTime()
                         }
-                        "canDelete" -> {}
+                        "canDelete" -> {
+                        }
                         else -> {
                             print("orgId $orgId: failed to recognize property $propName ")
                         }
@@ -202,10 +206,11 @@ class Migration (
         statement.close()
     }
 
-    private fun migrateUsers(){
+    private fun migrateUsers() {
 
         //language=SQL
-        val createUserSQL = this.connection.prepareStatement("""
+        val createUserSQL = this.connection.prepareStatement(
+            """
             select migrate_people_proc from migrate_people_proc(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """.trimIndent()
         )
@@ -218,7 +223,7 @@ class Migration (
                 "match (n:User) return count(n) as users"
             )
 
-            while (result.hasNext()){
+            while (result.hasNext()) {
                 val record = result.next()
                 count = record.get("users").asInt()
                 print("Count: $count \n")
@@ -229,7 +234,7 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print("\n${i+1} ")
+                print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
                         match (n:User)
@@ -259,13 +264,13 @@ class Migration (
                 var timezone: String? = null
                 var title: String? = null
 
-                while (getUserResult.hasNext()){
+                while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
 
                     userId = record.get("userId").asString()
                     val propName = record.get("propName").asString()
 
-                    when(propName){
+                    when (propName) {
                         "about" -> {
                             about = record.get("propValue").asString()
                         }
@@ -299,8 +304,10 @@ class Migration (
                         "title" -> {
                             title = record.get("propValue").asString()
                         }
-                        "canDelete" -> {}
-                        "roles" -> {}
+                        "canDelete" -> {
+                        }
+                        "roles" -> {
+                        }
                         else -> {
                             print("userId $userId: failed to recognize property $propName ")
                         }
@@ -406,7 +413,7 @@ class Migration (
         statement.close()
     }
 
-    private fun migrateRoles(){
+    private fun migrateRoles() {
 
         // create roles
 
@@ -432,12 +439,13 @@ class Migration (
         )
 
         //language=SQL
-        val createRoleSQL = this.connection.prepareStatement("""
+        val createRoleSQL = this.connection.prepareStatement(
+            """
             select create_sc_role from create_sc_role(?);
         """.trimIndent()
         )
 
-        for (role in roles){
+        for (role in roles) {
             createRoleSQL.setString(1, role)
             val createResult = createRoleSQL.executeQuery()
             createResult.next()
@@ -449,7 +457,8 @@ class Migration (
         // add user roles
 
         //language=SQL
-        val addUserRoleSQL = this.connection.prepareStatement("""
+        val addUserRoleSQL = this.connection.prepareStatement(
+            """
             select add_user_role_proc from add_user_role_proc(?, ?);
         """.trimIndent()
         )
@@ -467,14 +476,14 @@ class Migration (
 
             var userId: String? = null
 
-            while (getUserRoles.hasNext()){
+            while (getUserRoles.hasNext()) {
                 val record = getUserRoles.next()
 
                 userId = record.get("id").asString()
                 val neoRole = record.get("role").asString()
                 var newRole: String? = null
 
-                when(neoRole){
+                when (neoRole) {
                     "Administrator" -> newRole = "Administrator"
                     "ProjectManager" -> newRole = "Project Manager"
                     "FinancialAnalyst" -> newRole = "Financial Analyst"
@@ -500,7 +509,7 @@ class Migration (
                     }
                 }
 
-                if (newRole != null){
+                if (newRole != null) {
 
                     // write to postgres
                     addUserRoleSQL.setString(1, userId)
@@ -535,7 +544,7 @@ class Migration (
             in pPopulation int,
             in provisionalCode varchar(32)
         )
-        returns INT
+        returns INT  
         language plpgsql
         as ${'$'}${'$'}
         declare
@@ -565,10 +574,11 @@ class Migration (
         statement.close()
     }
 
-    private fun migrateEthnologue(){
+    private fun migrateEthnologue() {
 
         //language=SQL
-        val createEthnologueSQL = this.connection.prepareStatement("""
+        val createEthnologueSQL = this.connection.prepareStatement(
+            """
             select migrate_ethnologue_proc from migrate_ethnologue_proc(?, ?, ?, ?, ?);
         """.trimIndent()
         )
@@ -581,7 +591,7 @@ class Migration (
                 "match (n:EthnologueLanguage) return count(n) as eth"
             )
 
-            while (result.hasNext()){
+            while (result.hasNext()) {
                 val record = result.next()
                 count = record.get("eth").asInt()
                 print("Count: $count \n")
@@ -592,7 +602,7 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print("\n${i+1} ")
+                print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
                         match (n:EthnologueLanguage)
@@ -615,32 +625,33 @@ class Migration (
                 var name: String? = null
                 var population: Int? = null
 
-                while (getUserResult.hasNext()){
+                while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
 
                     id = record.get("id").asString()
                     val propName = record.get("propName").asString()
 
-                    when(propName){
+                    when (propName) {
                         "code" -> {
-                            if (!record.get("propValue").isNull){
+                            if (!record.get("propValue").isNull) {
                                 ISO_639 = record.get("propValue").asString()
                             }
                         }
                         "provisionalCode" -> {
-                            if (!record.get("propValue").isNull){
+                            if (!record.get("propValue").isNull) {
                                 provisionalCode = record.get("propValue").asString()
                             }
                         }
                         "population" -> {
-                            if (!record.get("propValue").isNull){
+                            if (!record.get("propValue").isNull) {
                                 population = record.get("propValue").asInt()
                             }
                         }
                         "name" -> {
                             name = record.get("propValue").asString()
                         }
-                        "canDelete" -> {}
+                        "canDelete" -> {
+                        }
                         else -> {
                             print("ethId $id: failed to recognize property $propName ")
                         }
@@ -717,10 +728,11 @@ class Migration (
         statement.close()
     }
 
-    private fun migrateLanguages(){
+    private fun migrateLanguages() {
 
         //language=SQL
-        val createLanguageSQL = this.connection.prepareStatement("""
+        val createLanguageSQL = this.connection.prepareStatement(
+            """
             select migrate_languages_proc from migrate_languages_proc(?, ?);
         """.trimIndent()
         )
@@ -733,7 +745,7 @@ class Migration (
                 "match (n:Language) return count(n) as count"
             )
 
-            while (result.hasNext()){
+            while (result.hasNext()) {
                 val record = result.next()
                 count = record.get("count").asInt()
                 print("Count: $count \n")
@@ -744,7 +756,7 @@ class Migration (
 
         for (i in 0 until count) {
             neo4j.driver.session().readTransaction {
-                print("\n${i+1} ")
+                print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
                         match (n:Language)
@@ -768,25 +780,25 @@ class Migration (
                 var ethName: String? = null
                 var langName: String? = null
 
-                while (getUserResult.hasNext()){
+                while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
 
                     // langId = record.get("langId").asString()
                     val propName = record.get("propName").asString()
                     ethName = record.get("ethNameValue").asString()
-                    when(propName){
+                    when (propName) {
 //                        "ethNameValue" -> {
 //                            if (!record.get("propValue").isNull){
 //                                ethName = record.get("propValue").asString()
 //                            }
 //                        }
                         "name" -> {
-                            if (!record.get("propValue").isNull){
+                            if (!record.get("propValue").isNull) {
                                 langName = record.get("propValue").asString()
                             }
                         }
                         else -> {
-                           // print("lang xxx: failed to recognize property $propName ")
+                            // print("lang xxx: failed to recognize property $propName ")
                         }
                     }
                 }
@@ -826,4 +838,170 @@ class Migration (
             }
         }
     }
+
+    val migratePartnersProc = """
+        create or replace function migrate_partners_proc(
+            in groupName varchar(255),
+            in globalInnovationsClient bool,
+            in pmcEntityCode varchar(32)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vGroupId INT;
+            vPersonId INT;
+        begin
+            SELECT sys_group_id
+            FROM sys_groups
+            INTO vGroupId
+            WHERE sys_groups.name = groupName;
+            IF found THEN
+                INSERT INTO sc_partners("sys_group_id","is_global_innovations_client", "pmc_entity_code")
+                VALUES (vGroupId, globalInnovationsClient, pmcEntityCode)
+                RETURNING sys_group_id
+                INTO vGroupId;
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 2;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.migratePartnersProc)
+        statement.close()
+    }
+    private fun migratePartners() {
+        val createPartnerSQL = this.connection.prepareStatement(
+            """
+            select migrate_partners_proc from migrate_partners_proc(?, ?, ?);
+        """.trimIndent()
+        )
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nPartners ")
+            val result = it.run(
+                "match (n:Partner) return count(n) as count"
+            )
+
+            while (result.hasNext()) {
+                val record = result.next()
+                count = record.get("count").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i + 1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:Partner)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:organization {active: true}]->(org:Organization)
+                        -[:name {active: true}]->(orgName:Property) 
+                        return 
+                            n.id as groupId, 
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt,
+                            orgName.value as groupName
+                    """.trimIndent()
+                )
+                var globalInnovationsClient: Boolean? = null
+                var pmcEntityCode: String? = null
+                var groupName: String? = null
+
+                while(getUserResult.hasNext()){
+                    val record = getUserResult.next()
+                    val propName = record.get("propName").asString()
+
+                    groupName = record.get("groupName").asString()
+                    when(propName){
+                        "globalInnovationsClient"->{
+                            globalInnovationsClient = record.get("propValue").asBoolean()
+                        }
+                        "pmcEntityCode" ->{
+                            pmcEntityCode = record.get("propValue").asString()
+                        }
+                        else -> {
+                            print(" failed to recognize property $propName ")
+                        }
+                    }
+                }
+                it.commit()
+                it.close()
+
+                createPartnerSQL.setString(1,groupName)
+                if (globalInnovationsClient != null) {
+                    createPartnerSQL.setBoolean(2, globalInnovationsClient)
+                } else {
+                    createPartnerSQL.setNull(2, Types.NULL)
+                }
+                createPartnerSQL.setString(3,pmcEntityCode)
+
+                val createResult = createPartnerSQL.executeQuery()
+                createResult.next()
+                val code = createResult.getInt(1)
+                print(" code:$code")
+                createResult.close()
+            }
+        }
+
+    }
+
+    val migrateProjectsProc = """
+        create or replace function migrate_projects_proc(
+            in departmentId varchar(32),
+            in marketingLocation int,
+            in name varchar(32),
+            in primaryLocation int,
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vProjectId INT;
+            vPersonId INT;
+        begin
+            SELECT sys_group_id
+            FROM sys_groups
+            INTO vGroupId
+            WHERE sys_group_id = pGroupId;
+            IF found THEN
+                INSERT INTO sc_partners("sys_group_id","is_global_innovations_client", "pmc_entity_code")
+                VALUES (vGroupId, globalInnovationsClient, pmcEntityCode)
+                RETURNING sys_groups.sys_group_id
+                INTO vGroupId;
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 2;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init {
+        val statement = this.connection.createStatement()
+        statement.execute(this.migrateProjectsProc)
+        statement.close()
+    }
+
+
+    private fun migrateProjects(){
+
+    }
+
 }
+

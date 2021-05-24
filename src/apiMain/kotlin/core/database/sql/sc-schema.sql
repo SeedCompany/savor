@@ -411,6 +411,7 @@ create table if not exists sc_projects (
 	status_changed_at timestamp,
 	step sc_enum_project_step,
 	primary key (project_sys_group_id, sc_change_to_plan_id),
+--    primary key (project_sys_group_id),
 	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (root_directory_sc_directory_id) references sc_directories(sc_directory_id),
 	foreign key (field_region_sys_location_id) references sys_locations(sys_location_id),
