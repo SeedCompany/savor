@@ -24,6 +24,8 @@ class Migration (
 
 //        this.migrateFiles()
 //        this.migrateFileVersions()
+//        this.migratePartnerships()
+            this.migrateFieldZones()
     }
 
     // ORGS ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1117,9 +1119,10 @@ class Migration (
     }
 
     val migrateFileVersionProc = """
-        create or replace function migrate_fileversions_proc(
+        create or replace function migrate_file_versions_proc(
            in userPhone varchar(32),
-           in fileName varchar(255)
+           in fileVersionName varchar(255),
+           in fileVersionSize int
         )
         returns INT
         language plpgsql
@@ -1133,8 +1136,8 @@ class Migration (
             INTO vPersonId
             WHERE sp.phone = userPhone;
             IF found THEN
-                INSERT INTO sc_files("creator_sys_person_id", "name")
-                VALUES (vPersonId, fileName);
+                INSERT INTO sc_file_versions("creator_sys_person_id", "name", "file_size")
+                VALUES (vPersonId, fileVersionName, fileVersionSize);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -1148,6 +1151,305 @@ class Migration (
         statement.execute(this.migrateFileVersionProc)
         statement.close()
     }
+
+    private fun migrateFileVersions() {
+        val createFileVersionSQL = this.connection.prepareStatement(
+            """
+            select migrate_file_versions_proc from migrate_file_versions_proc(?, ?, ?);
+        """.trimIndent()
+        )
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nFile Version ")
+            val result = it.run(
+                "match (n:FileVersion) return count(n) as count"
+            )
+
+            while (result.hasNext()) {
+                val record = result.next()
+                count = record.get("count").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i + 1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:FileVersion)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:createdBy {active: true}]->(user:User)
+                        -[:phone {active: true}]->(userPhone:Property) 
+                        return 
+                            n.id as id,
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt,
+                            userPhone.value as userPhone
+                    """.trimIndent()
+                )
+                var fileVersionName: String? = null
+                var userPhone: String? = null
+                var fileVersionSize: Int? = null
+
+                while (getUserResult.hasNext()) {
+                    val record = getUserResult.next()
+                    val propName = record.get("propName").asString()
+
+                    userPhone = record.get("userPhone").asString()
+                    when (propName) {
+                        "name" -> {
+                            fileVersionName = record.get("propValue").asString()
+                        }
+                        "size" -> {
+                            fileVersionSize = record.get("propValue").asInt()
+                        }
+
+                        else -> {
+//                            print(" failed to recognize property $propName ")
+                        }
+                    }
+                }
+                it.commit()
+                it.close()
+
+                print("\n $userPhone, $fileVersionName, $fileVersionSize \n")
+
+                createFileVersionSQL.setString(1, userPhone)
+
+                createFileVersionSQL.setString(2, fileVersionName)
+                if (fileVersionSize != null) {
+                    createFileVersionSQL.setInt(3, fileVersionSize)
+                } else {
+                    createFileVersionSQL.setNull(3, Types.NULL)
+                }
+
+
+                val createResult = createFileVersionSQL.executeQuery()
+                createResult.next()
+                val code = createResult.getInt(1)
+                print("code:$code")
+                createResult.close()
+            }
+        }
+    }
+
+    val migratePartnershipsProc = """
+        create or replace function migrate_partnerships_proc(
+           in orgName varchar(255)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vGroupId INT;
+        begin
+            SELECT sg.sys_group_id
+            FROM sys_groups AS sg
+            INTO vGroupId
+            WHERE sg.name = orgName;
+            IF found THEN
+                INSERT INTO sc_partnerships("project_sys_group_id", "partner_sys_group_id")
+                VALUES (vGroupId, vGroupId);
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 2;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init{
+        val statement = this.connection.createStatement()
+        statement.execute(this.migratePartnershipsProc)
+        statement.close()
+    }
+
+    private fun migratePartnerships() {
+        val createFileSQL = this.connection.prepareStatement(
+            """
+            select migrate_partnerships_proc from migrate_partnerships_proc(?);
+        """.trimIndent()
+        )
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nPartnerships ")
+            val result = it.run(
+                "match (n:Partnership) return count(n) as count"
+            )
+
+            while (result.hasNext()) {
+                val record = result.next()
+                count = record.get("count").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i + 1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:Partnership)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:partner {active: true}]->(partner:Partner)
+                        -[:organization {active:true}]->(org:Organization)
+                        -[:name {active: true}]->(orgName:Property) 
+                        return 
+                            n.id as id,
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt,
+                            orgName.value as orgName
+                    """.trimIndent()
+                )
+                var orgName: String? = null
+
+                while (getUserResult.hasNext()) {
+                    val record = getUserResult.next()
+                    orgName = record.get("orgName").asString()
+                }
+                it.commit()
+                it.close()
+
+                print("\n $orgName \n")
+
+                createFileSQL.setString(1, orgName)
+
+
+                val createResult = createFileSQL.executeQuery()
+                createResult.next()
+                val code = createResult.getInt(1)
+                print(" code:$code")
+                createResult.close()
+            }
+        }
+    }
+
+    val migrateFieldZonesProc = """
+        create or replace function migrate_field_zones_proc(
+           in directorPhone varchar(32),
+           in fieldZoneName varchar(32)
+        )
+        returns INT
+        language plpgsql
+        as ${'$'}${'$'}
+        declare
+            vResponseCode INT;
+            vPersonId INT;
+        begin
+            SELECT sp.sys_person_id 
+            FROM sys_people AS sp
+            INTO vPersonId
+            WHERE sp.phone = directorPhone;
+            IF found THEN
+                INSERT INTO sc_field_zone("director_sys_person_id", "name")
+                VALUES (vPersonId, fieldZoneName);
+                vResponseCode := 0;
+            ELSE
+                vResponseCode := 2;
+            END IF;
+            return vResponseCode;
+        end; ${'$'}${'$'}
+    """.trimIndent()
+
+    init{
+        val statement = this.connection.createStatement()
+        statement.execute(this.migrateFieldZonesProc)
+        statement.close()
+    }
+
+    private fun migrateFieldZones() {
+        val createFieldZoneSQL = this.connection.prepareStatement(
+            """
+            select migrate_field_zones_proc from migrate_field_zones_proc(?, ?);
+        """.trimIndent()
+        )
+        var count = 0
+
+        neo4j.driver.session().readTransaction {
+            print("\nField Zones ")
+            val result = it.run(
+                "match (n:FieldZone) return count(n) as count"
+            )
+
+            while (result.hasNext()) {
+                val record = result.next()
+                count = record.get("count").asInt()
+                print("Count: $count \n")
+            }
+
+            result.consume()
+        }
+        for (i in 0 until count) {
+            neo4j.driver.session().readTransaction {
+                print("\n${i + 1} ")
+                val getUserResult = it.run(
+                    """
+                        match (n:FieldZone)
+                        with *
+                        skip $i
+                        limit 1
+                        match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:director {active: true}]->(user:User)
+                        -[:phone {active: true}]->(userPhone:Property) 
+                        return 
+                            n.id as id,
+                            type(r) as propName, 
+                            prop.value as propValue, 
+                            prop.createdAt as createdAt,
+                            userPhone.value as userPhone
+                    """.trimIndent()
+                )
+                var userPhone: String? = null
+                var fieldZoneName: String? = null
+
+                while (getUserResult.hasNext()) {
+                    val record = getUserResult.next()
+                    val propName = record.get("propName").asString()
+                    userPhone = record.get("userPhone").asString()
+                    when (propName) {
+                        "name" -> {
+                            fieldZoneName = record.get("propValue").asString()
+                        }
+                        else -> {
+//                            print(" failed to recognize property $propName ")
+                        }
+                    }
+                }
+                it.commit()
+                it.close()
+
+                print("\n $userPhone \n")
+
+                createFieldZoneSQL.setString(1, userPhone)
+                createFieldZoneSQL.setString(2, fieldZoneName)
+
+                val createResult = createFieldZoneSQL.executeQuery()
+                createResult.next()
+                val code = createResult.getInt(1)
+                print(" code:$code")
+                createResult.close()
+            }
+        }
+    }
+
+
 
 
 

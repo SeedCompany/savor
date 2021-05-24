@@ -370,12 +370,12 @@ create table if not exists sc_file_versions (
     category varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     creator_sys_person_id int not null,
-    mime_type enum_mime_type not null,
+--    mime_type enum_mime_type not null,
     name varchar(255) not null,
-    sc_file_id int not null,
-    sc_file_url varchar(255) not null,
+--    sc_file_id int not null,
+--    sc_file_url varchar(255) not null,
     file_size int, -- bytes
-    foreign key (sc_file_id) references sc_files(sc_file_id),
+--    foreign key (sc_file_id) references sc_files(sc_file_id),
 	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
 );
 
@@ -421,15 +421,16 @@ create table if not exists sc_projects (
 create table if not exists sc_partnerships (
     project_sys_group_id int not null,
     partner_sys_group_id int not null,
-    sc_change_to_plan_id int not null default 0,
+--    sc_change_to_plan_id int not null default 0,
     active bool,
     agreement_sc_file_version_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (project_sys_group_id, partner_sys_group_id, sc_change_to_plan_id),
+	primary key (project_sys_group_id, partner_sys_group_id),
+--	sc_change_to_plan_id),
 	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (partner_sys_group_id) references sys_groups(sys_group_id),
-	foreign key (agreement_sc_file_version_id) references sc_file_versions(sc_file_version_id),
-	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	--	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	foreign key (agreement_sc_file_version_id) references sc_file_versions(sc_file_version_id)
 );
 
 create table if not exists sc_budgets (
