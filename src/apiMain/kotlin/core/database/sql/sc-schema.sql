@@ -351,7 +351,10 @@ create table if not exists sc_person_unavailabilities (
 
 create table if not exists sc_directories (
     sc_directory_id serial primary key,
-	created_at timestamp not null default CURRENT_TIMESTAMP
+    name varchar(255),
+    creator_sys_person_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+    foreign key (creator_sys_person_id) references sys_people(sys_person_id)
 	-- todo
 );
 
