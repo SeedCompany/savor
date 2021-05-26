@@ -167,8 +167,8 @@ create table if not exists sys_scripture_references (
 create table if not exists sys_locations (
 	sys_location_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	name varchar(255) unique not null,
-	type enum_location_type not null
+	name varchar(255) unique not null
+--	type enum_location_type not null
 );
 
 -- LANGUAGE -----------------------------------------------------------------
