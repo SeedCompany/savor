@@ -1,23 +1,9 @@
 package core
 
 import core.database.Neo4j
+import core.database.scripts.*
 import java.sql.Connection
 import java.sql.Types
-import core.database.scripts.MigrateOrgs
-import core.database.scripts.MigrateUsers
-import core.database.scripts.MigrateRoles
-import core.database.scripts.MigrateLanguages
-import core.database.scripts.MigrateEthnologue
-import core.database.scripts.MigratePartners
-import core.database.scripts.MigratePartnerships
-import core.database.scripts.MigrateDirectories
-import core.database.scripts.MigrateFieldRegions
-import core.database.scripts.MigrateFieldZones
-import core.database.scripts.MigrateLocations
-import core.database.scripts.MigrateFiles
-import core.database.scripts.MigrateFileVersions
-
-
 
 
 import java.time.ZonedDateTime
@@ -31,20 +17,21 @@ class Migration (
 
 
     fun migrate() {
-        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
-        MigrateUsers(config, neo4j,connection).migrateUsers()
-        MigrateRoles(config, neo4j,connection).migrateRoles()
-        MigrateEthnologue(config, neo4j,connection).migrateEthnologue()
-        MigrateLanguages(config, neo4j,connection).migrateLanguages()
-        MigratePartners(config, neo4j,connection).migratePartners()
-        MigrateDirectories(config, neo4j,connection).migrateDirectories()
-        MigratePartnerships(config, neo4j,connection).migratePartnerships()
-        MigrateFieldZones(config, neo4j,connection).migrateFieldZones()
-        MigrateFieldRegions(config, neo4j,connection).migrateFieldRegions()
-        MigrateLocations(config, neo4j,connection).migrateLocations()
-        MigrateFiles(config, neo4j,connection).migrateFiles()
-        MigrateFileVersions(config, neo4j,connection).migrateFileVersions()
-//        this.migrateProjects() - unique primary key constraint (need change to plan)
+//        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
+//        MigrateUsers(config, neo4j,connection).migrateUsers()
+//        MigrateRoles(config, neo4j,connection).migrateRoles()
+//        MigrateEthnologue(config, neo4j,connection).migrateEthnologue()
+//        MigrateLanguages(config, neo4j,connection).migrateLanguages()
+//        MigratePartners(config, neo4j,connection).migratePartners()
+//        MigrateDirectories(config, neo4j,connection).migrateDirectories()
+//        MigratePartnerships(config, neo4j,connection).migratePartnerships()
+//        MigrateFieldZones(config, neo4j,connection).migrateFieldZones()
+//        MigrateFieldRegions(config, neo4j,connection).migrateFieldRegions()
+//        MigrateLocations(config, neo4j,connection).migrateLocations()
+//        MigrateFiles(config, neo4j,connection).migrateFiles()
+//        MigrateFileVersions(config, neo4j,connection).migrateFileVersions()
+//        MigratePlanChanges(config,neo4j, connection).migratePlanChange()
+//        MigrateProjects(config, neo4j, connection).migrateProjects()
 
     }
 
