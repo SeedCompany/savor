@@ -164,17 +164,52 @@ create table if not exists sys_scripture_references (
 
 -- LOCATION -----------------------------------------------------------------
 
+DO $$ BEGIN
+    create type enum_location_type as enum (
+          'City',
+          'County',
+          'State',
+		  'Country',
+          'CrossBorderArea'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
 create table if not exists sys_locations (
 	sys_location_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) unique not null
---	type enum_location_type not null
+	type enum_location_type not null
 );
 
 -- LANGUAGE -----------------------------------------------------------------
 
--- todo: map the 3 SIL tables:
+-- sil tables are copied from SIL schema docs
+-- https://www.ethnologue.com/codes/code-table-structure
 -- http://www.ethnologue.com/sites/default/files/Ethnologue-19-Global%20Dataset%20Doc.pdf
+CREATE TABLE if not exists sil_language_codes (
+   lang_id char(3) not null,  -- Three-letter code
+   country_id char(2) not null,  -- Main country where used
+   lang_status char(1) not null,  -- L(iving), (e)X(tinct)
+   name varchar(75) not null   -- Primary name in that country
+);
+
+CREATE TABLE if not exists sil_country_codes (
+   country_id char(2) not null,  -- Two-letter code from ISO3166
+   name varchar(75) not null,  -- Country name
+   area varchar(10) not null -- World area
+);
+
+CREATE TABLE if not exists sil_language_index (
+   lang_id char(3) not null,  -- Three-letter code for language
+   country_id char(2) not null,  -- Country where this name is used
+   name_type char(2) not null,  -- L(anguage), LA(lternate),
+                                -- D(ialect), DA(lternate)
+                                -- LP,DP (a pejorative alternate)
+   name  varchar(75) not null   -- The name
+);
+
 create table if not exists sil_table_of_languages (
     sys_ethnologue_id serial primary key,
     sys_ethnologue_legacy_id varchar(32),

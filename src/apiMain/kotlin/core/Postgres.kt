@@ -27,8 +27,8 @@ class Postgres(
         val statement = conn.createStatement()
 
         // load schema and initial data - commands are idempotent
-        val sysSchema = File("./src/apiMain/kotlin/core/database/sql/sys-schema.sql").readText()
-        val scSchema = File("./src/apiMain/kotlin/core/database/sql/sc-schema.sql").readText()
+        val sysSchema = File("./src/apiMain/kotlin/core/data/sql/sys-schema.sql").readText()
+        val scSchema = File("./src/apiMain/kotlin/core/data/sql/sc-schema.sql").readText()
         //val data = File("./src/apiMain/kotlin/core/database/sql/sys-schema.sql").readText()
 
         statement.execute(sysSchema)
