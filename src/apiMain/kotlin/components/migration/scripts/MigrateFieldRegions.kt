@@ -1,14 +1,13 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
-class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connection) {
-    val migrateFilesProc = """
-        create or replace function migrate_files_proc(
-           in userPhone varchar(32),
-           in fileName varchar(255)
+class MigrateFieldRegions(val neo4j: Neo4j, val connection: Connection) {
+    val migrateFieldRegionsProc = """
+        create or replace function migrate_field_regions_proc(
+           in directorPhone varchar(32),
+           in fieldRegionName varchar(32)
         )
         returns INT
         language plpgsql
@@ -20,10 +19,10 @@ class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connect
             SELECT sp.sys_person_id 
             FROM sys_people AS sp
             INTO vPersonId
-            WHERE sp.phone = userPhone;
+            WHERE sp.phone = directorPhone;
             IF found THEN
-                INSERT INTO sc_files("creator_sys_person_id", "name")
-                VALUES (vPersonId, fileName);
+                INSERT INTO sc_field_regions("director_sys_person_id", "name")
+                VALUES (vPersonId, fieldRegionName);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -31,24 +30,25 @@ class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connect
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()
-    init {
+
+    init{
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateFilesProc)
+        statement.execute(this.migrateFieldRegionsProc)
         statement.close()
     }
 
-    public fun migrateFiles() {
-        val createFileSQL = this.connection.prepareStatement(
+    public fun migrateFieldRegions() {
+        val createFieldRegionSQL = this.connection.prepareStatement(
             """
-            select migrate_files_proc from migrate_files_proc(?, ?);
+            select migrate_field_regions_proc from migrate_field_regions_proc(?, ?);
         """.trimIndent()
         )
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            print("\nFile ")
+            print("\nField Regions ")
             val result = it.run(
-                "match (n:File) return count(n) as count"
+                "match (n:FieldRegion) return count(n) as count"
             )
 
             while (result.hasNext()) {
@@ -64,13 +64,13 @@ class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connect
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
-                        match (n:File)
+                        match (n:FieldRegion)
                         with *
                         skip $i
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
                         with * 
-                        match (n)-[:createdBy {active: true}]->(user:User)
+                        match (n)-[:director {active: true}]->(user:User)
                         -[:phone {active: true}]->(userPhone:Property) 
                         return 
                             n.id as id,
@@ -80,35 +80,31 @@ class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connect
                             userPhone.value as userPhone
                     """.trimIndent()
                 )
-
-
-                var fileName: String? = null
                 var userPhone: String? = null
+                var fieldRegionName: String? = null
 
                 while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
                     val propName = record.get("propName").asString()
-
                     userPhone = record.get("userPhone").asString()
                     when (propName) {
                         "name" -> {
-                            fileName = record.get("propValue").asString()
+                            fieldRegionName = record.get("propValue").asString()
                         }
                         else -> {
-                            print(" failed to recognize property $propName ")
+//                            print(" failed to recognize property $propName ")
                         }
                     }
                 }
                 it.commit()
                 it.close()
 
-                print("\n $userPhone,$fileName \n")
+                print("\n $userPhone \n")
 
-                createFileSQL.setString(1, userPhone)
+                createFieldRegionSQL.setString(1, userPhone)
+                createFieldRegionSQL.setString(2, fieldRegionName)
 
-                createFileSQL.setString(2, fileName)
-
-                val createResult = createFileSQL.executeQuery()
+                val createResult = createFieldRegionSQL.executeQuery()
                 createResult.next()
                 val code = createResult.getInt(1)
                 print(" code:$code")
@@ -116,5 +112,4 @@ class MigrateFiles(val config: Config, val neo4j: Neo4j, val connection: Connect
             }
         }
     }
-
 }

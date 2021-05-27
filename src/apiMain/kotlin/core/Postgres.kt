@@ -1,26 +1,26 @@
-package core.database
+package org.seedcompany.api.core
 
-import core.Config
-import java.io.BufferedReader
-import java.io.FileReader
-import java.io.Reader
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Component
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.*
-import org.apache.ibatis.jdbc.ScriptRunner;
 import java.io.File
 
-class Database(
-    val config: Config
+@Component
+class Postgres(
+    @Autowired
+    val config: PostgresConfig
 ) {
-    private val url = "${config.postgresUrl}/${config.postgresDatabase}"
+    private val url = "${config.url}/${config.database}"
     private val props = Properties()
-    var conn: Connection
+    val conn: Connection
 
     init {
-        props.setProperty("port", config.postgresPort)
-        props.setProperty("user", config.postgresUser)
-        props.setProperty("password", config.postgresPassword)
+        props.setProperty("port", config.port)
+        props.setProperty("user", config.user)
+        props.setProperty("password", config.password)
         props.setProperty("ssl", "false")
         this.conn = DriverManager.getConnection(url, props)
 
@@ -36,6 +36,11 @@ class Database(
         //statement.execute(data)
 
         statement.close()
+    }
+
+    @Bean
+    fun getConnection(): Connection {
+        return this.conn
     }
 
 }

@@ -1,10 +1,9 @@
-package core.database.scripts
-import core.Config
-import java.time.ZonedDateTime
-import core.database.Neo4j
+package components.migration.scripts
+
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
-class MigrateRoles(val config: Config, val neo4j: Neo4j, val connection: Connection) {
+class MigrateRoles(val neo4j: Neo4j, val connection: Connection) {
     val createSCRoleProc = """
         create or replace function create_sc_role(
             in pRoleName varchar(255)

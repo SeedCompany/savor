@@ -1,54 +1,56 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
-class MigrateLocations(val config: Config, val neo4j: Neo4j, val connection: Connection) {
-    val migrateLocationsProc = """
-        create or replace function migrate_locations_proc(
-           in locationName varchar(32)
+class MigrateDirectories(val neo4j: Neo4j, val connection: Connection) {
+    val migrateDirectoriesProc = """
+        create or replace function migrate_directories_proc(
+           in userPhone varchar(255),
+           in directoryName varchar(255)
         )
         returns INT
         language plpgsql
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
-            vLocationId INT;
+            vPersonId INT;
         begin
-            SELECT sl.sys_location_id
-            FROM sys_locations AS sl
-            INTO vLocationId
-            WHERE sl.name = locationName;
-            IF NOT found THEN
-                INSERT INTO sys_locations("name")
-                VALUES (locationName);
+            SELECT sp.sys_person_id 
+            FROM sys_people AS sp
+            INTO vPersonId
+            WHERE sp.phone = userPhone;
+            IF found THEN
+                INSERT INTO sc_directories("creator_sys_person_id","name")
+                VALUES (vPersonId,directoryName);
                 vResponseCode := 0;
             ELSE
-                vResponseCode := 1;
+                vResponseCode := 2;
             END IF;
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()
 
+
     init {
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateLocationsProc)
+        statement.execute(this.migrateDirectoriesProc)
         statement.close()
     }
 
-    public fun migrateLocations() {
-        val createLocationSQL = this.connection.prepareStatement(
+
+    public fun migrateDirectories() {
+        val createDirectorySQL = this.connection.prepareStatement(
             """
-            select migrate_locations_proc from migrate_locations_proc(?);
+            select migrate_directories_proc from migrate_directories_proc(?,?);
         """.trimIndent()
         )
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            print("\nLocations")
+            print("\nDirectory")
             val result = it.run(
-                "match (n:Location) return count(n) as count"
+                "match (n:Directory) return count(n) as count"
             )
 
             while (result.hasNext()) {
@@ -64,26 +66,32 @@ class MigrateLocations(val config: Config, val neo4j: Neo4j, val connection: Con
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
-                        match (n:Location)
+                        match (n:Directory)
                         with *
                         skip $i
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
+                        with * 
+                        match (n)-[:createdBy {active: true}]->(user:User)
+                        -[:phone {active: true}]->(userPhone:Property) 
                         return 
                             n.id as id, 
                             type(r) as propName, 
                             prop.value as propValue, 
-                            prop.createdAt as createdAt
+                            prop.createdAt as createdAt,
+                            userPhone.value as userPhone
                     """.trimIndent()
                 )
-                var locationName: String? = null
+                var directoryName: String? = null
+                var userPhone: String? = null
 
                 while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
                     val propName = record.get("propName").asString()
+                    userPhone = record.get("userPhone").asString()
                     when (propName) {
                         "name" -> {
-                            locationName = record.get("propValue").asString()
+                            directoryName = record.get("propValue").asString()
                         }
                         else -> {
 //                            print(" failed to recognize property $propName ")
@@ -93,18 +101,16 @@ class MigrateLocations(val config: Config, val neo4j: Neo4j, val connection: Con
                 it.commit()
                 it.close()
 
-                print("\n $locationName \n")
+                print("\n $directoryName \n")
+                createDirectorySQL.setString(1, userPhone)
+                createDirectorySQL.setString(2, directoryName)
 
-                createLocationSQL.setString(1, locationName)
-
-                val createResult = createLocationSQL.executeQuery()
+                val createResult = createDirectorySQL.executeQuery()
                 createResult.next()
                 val code = createResult.getInt(1)
-                print(" code:$code")
+                print("code: $code")
                 createResult.close()
             }
         }
     }
-
-
 }

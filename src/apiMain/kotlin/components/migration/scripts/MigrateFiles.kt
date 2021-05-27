@@ -1,14 +1,13 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
-class MigrateFieldZones(val config: Config, val neo4j: Neo4j, val connection: Connection)  {
-    val migrateFieldZonesProc = """
-        create or replace function migrate_field_zones_proc(
-           in directorPhone varchar(32),
-           in fieldZoneName varchar(32)
+class MigrateFiles(val neo4j: Neo4j, val connection: Connection) {
+    val migrateFilesProc = """
+        create or replace function migrate_files_proc(
+           in userPhone varchar(32),
+           in fileName varchar(255)
         )
         returns INT
         language plpgsql
@@ -20,10 +19,10 @@ class MigrateFieldZones(val config: Config, val neo4j: Neo4j, val connection: Co
             SELECT sp.sys_person_id 
             FROM sys_people AS sp
             INTO vPersonId
-            WHERE sp.phone = directorPhone;
+            WHERE sp.phone = userPhone;
             IF found THEN
-                INSERT INTO sc_field_zone("director_sys_person_id", "name")
-                VALUES (vPersonId, fieldZoneName);
+                INSERT INTO sc_files("creator_sys_person_id", "name")
+                VALUES (vPersonId, fileName);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -31,25 +30,24 @@ class MigrateFieldZones(val config: Config, val neo4j: Neo4j, val connection: Co
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()
-
-    init{
+    init {
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateFieldZonesProc)
+        statement.execute(this.migrateFilesProc)
         statement.close()
     }
 
-    public fun migrateFieldZones() {
-        val createFieldZoneSQL = this.connection.prepareStatement(
+    public fun migrateFiles() {
+        val createFileSQL = this.connection.prepareStatement(
             """
-            select migrate_field_zones_proc from migrate_field_zones_proc(?, ?);
+            select migrate_files_proc from migrate_files_proc(?, ?);
         """.trimIndent()
         )
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            print("\nField Zones ")
+            print("\nFile ")
             val result = it.run(
-                "match (n:FieldZone) return count(n) as count"
+                "match (n:File) return count(n) as count"
             )
 
             while (result.hasNext()) {
@@ -65,13 +63,13 @@ class MigrateFieldZones(val config: Config, val neo4j: Neo4j, val connection: Co
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
-                        match (n:FieldZone)
+                        match (n:File)
                         with *
                         skip $i
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
                         with * 
-                        match (n)-[:director {active: true}]->(user:User)
+                        match (n)-[:createdBy {active: true}]->(user:User)
                         -[:phone {active: true}]->(userPhone:Property) 
                         return 
                             n.id as id,
@@ -81,31 +79,35 @@ class MigrateFieldZones(val config: Config, val neo4j: Neo4j, val connection: Co
                             userPhone.value as userPhone
                     """.trimIndent()
                 )
+
+
+                var fileName: String? = null
                 var userPhone: String? = null
-                var fieldZoneName: String? = null
 
                 while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
                     val propName = record.get("propName").asString()
+
                     userPhone = record.get("userPhone").asString()
                     when (propName) {
                         "name" -> {
-                            fieldZoneName = record.get("propValue").asString()
+                            fileName = record.get("propValue").asString()
                         }
                         else -> {
-//                            print(" failed to recognize property $propName ")
+                            print(" failed to recognize property $propName ")
                         }
                     }
                 }
                 it.commit()
                 it.close()
 
-                print("\n $userPhone \n")
+                print("\n $userPhone,$fileName \n")
 
-                createFieldZoneSQL.setString(1, userPhone)
-                createFieldZoneSQL.setString(2, fieldZoneName)
+                createFileSQL.setString(1, userPhone)
 
-                val createResult = createFieldZoneSQL.executeQuery()
+                createFileSQL.setString(2, fileName)
+
+                val createResult = createFileSQL.executeQuery()
                 createResult.next()
                 val code = createResult.getInt(1)
                 print(" code:$code")

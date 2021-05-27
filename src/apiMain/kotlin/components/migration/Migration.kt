@@ -1,53 +1,35 @@
-package core
+package org.seedcompany.api.components.migration
 
-import core.database.Neo4j
+import org.neo4j.driver.Driver
+import org.springframework.beans.factory.annotation.Autowired
 import java.sql.Connection
 import java.sql.Types
-import core.database.scripts.MigrateOrgs
-import core.database.scripts.MigrateUsers
-import core.database.scripts.MigrateRoles
-import core.database.scripts.MigrateLanguages
-import core.database.scripts.MigrateEthnologue
-import core.database.scripts.MigratePartners
-import core.database.scripts.MigratePartnerships
-import core.database.scripts.MigrateDirectories
-import core.database.scripts.MigrateFieldRegions
-import core.database.scripts.MigrateFieldZones
-import core.database.scripts.MigrateLocations
-import core.database.scripts.MigrateFiles
-import core.database.scripts.MigrateFileVersions
+import org.springframework.stereotype.Component
 
-
-
-
-import java.time.ZonedDateTime
-
-
+@Component
 class Migration (
-    val config: Config,
-    val neo4j: Neo4j,
-    val connection: Connection,
+    @Autowired
+    val neo4j: Driver,
+    @Autowired
+    val postgres: Connection,
 ) {
 
-
     fun migrate() {
-        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
-        MigrateUsers(config, neo4j,connection).migrateUsers()
-        MigrateRoles(config, neo4j,connection).migrateRoles()
-        MigrateEthnologue(config, neo4j,connection).migrateEthnologue()
-        MigrateLanguages(config, neo4j,connection).migrateLanguages()
-        MigratePartners(config, neo4j,connection).migratePartners()
-        MigrateDirectories(config, neo4j,connection).migrateDirectories()
-        MigratePartnerships(config, neo4j,connection).migratePartnerships()
-        MigrateFieldZones(config, neo4j,connection).migrateFieldZones()
-        MigrateFieldRegions(config, neo4j,connection).migrateFieldRegions()
-        MigrateLocations(config, neo4j,connection).migrateLocations()
-        MigrateFiles(config, neo4j,connection).migrateFiles()
-        MigrateFileVersions(config, neo4j,connection).migrateFileVersions()
+//        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
+//        MigrateUsers(config, neo4j,connection).migrateUsers()
+//        MigrateRoles(config, neo4j,connection).migrateRoles()
+//        MigrateEthnologue(config, neo4j,connection).migrateEthnologue()
+//        MigrateLanguages(config, neo4j,connection).migrateLanguages()
+//        MigratePartners(config, neo4j,connection).migratePartners()
+//        MigrateDirectories(config, neo4j,connection).migrateDirectories()
+//        MigratePartnerships(config, neo4j,connection).migratePartnerships()
+//        MigrateFieldZones(config, neo4j,connection).migrateFieldZones()
+//        MigrateFieldRegions(config, neo4j,connection).migrateFieldRegions()
+//        MigrateLocations(config, neo4j,connection).migrateLocations()
+//        MigrateFiles(config, neo4j,connection).migrateFiles()
+//        MigrateFileVersions(config, neo4j,connection).migrateFileVersions()
 //        this.migrateProjects() - unique primary key constraint (need change to plan)
-
     }
-
 
     val migrateProjectsProc =  """
         create or replace function migrate_projects_proc(
@@ -79,20 +61,20 @@ class Migration (
     """.trimIndent()
 
     init {
-        val statement = this.connection.createStatement()
+        val statement = this.postgres.createStatement()
         statement.execute(this.migrateProjectsProc)
         statement.close()
     }
 
     private fun migrateProjects() {
-        val createProjectSQL = this.connection.prepareStatement(
+        val createProjectSQL = this.postgres.prepareStatement(
             """
             select migrate_projects_proc from migrate_projects_proc(?,?,?,?);
         """.trimIndent()
         )
         var count = 0
 
-        neo4j.driver.session().readTransaction {
+        neo4j.session().readTransaction {
             print("\nProject")
             val result = it.run(
                 "match (n:Project) return count(n) as count"
@@ -107,7 +89,7 @@ class Migration (
             result.consume()
         }
         for (i in 0 until count) {
-            neo4j.driver.session().readTransaction {
+            neo4j.session().readTransaction {
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """

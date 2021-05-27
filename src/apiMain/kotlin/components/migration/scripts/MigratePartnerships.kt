@@ -1,10 +1,9 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
-class MigratePartnerships(val config: Config, val neo4j: Neo4j, val connection: Connection) {
+class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
     val migratePartnershipsProc = """
         create or replace function migrate_partnerships_proc(
            in orgName varchar(255)

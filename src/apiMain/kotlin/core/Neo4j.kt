@@ -1,13 +1,18 @@
-package core.database
+package org.seedcompany.api.core
 
-import core.Config
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.Driver
 import org.neo4j.driver.GraphDatabase
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Component
 
+@Component
 class Neo4j (
-    val config: Config,
+    @Autowired
+    val config: Neo4jConfig,
 ) : AutoCloseable {
+
     val driver: Driver
 
     init {
@@ -21,12 +26,17 @@ class Neo4j (
             .build()
 
         this.driver = GraphDatabase.driver(
-            config.neo4jUrl,
-            AuthTokens.basic(config.neo4jUser, config.neo4jPassword),
+            config.url,
+            AuthTokens.basic(config.user, config.password),
             driverConfig
         )
 
         driver.verifyConnectivity()
+    }
+
+    @Bean
+    fun getNeo4jDriver(): Driver {
+        return this.driver
     }
 
     override fun close() {

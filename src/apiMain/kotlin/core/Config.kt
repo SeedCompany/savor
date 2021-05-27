@@ -1,19 +1,24 @@
-package core
+package org.seedcompany.api.core
 
-import com.typesafe.config.ConfigFactory
-import io.ktor.config.*
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
 
-class Config {
-    private val config = HoconApplicationConfig(ConfigFactory.load())
+@ConstructorBinding
+@ConfigurationProperties(prefix = "postgres")
+data class PostgresConfig (
+    var url: String = "",
+    var database: String = "",
+    var user: String = "",
+    var password: String = "",
+    var port: String = "",
+)
 
-    val postgresUrl = config.propertyOrNull("savor.postgres.url")?.getString()
-    val postgresDatabase = config.propertyOrNull("savor.postgres.database")?.getString()
-    val postgresUser = config.propertyOrNull("savor.postgres.user")?.getString()
-    val postgresPassword = config.propertyOrNull("savor.postgres.password")?.getString()
-    val postgresPort = config.propertyOrNull("savor.postgres.port")?.getString()
+@ConstructorBinding
+@ConfigurationProperties(prefix = "neo4j")
+data class Neo4jConfig (
+    var url: String = "",
+    var database: String = "",
+    var user: String = "",
+    var password: String = "",
+)
 
-    val neo4jUrl = config.propertyOrNull("savor.neo4j.url")?.getString()
-    val neo4jDatabase = config.propertyOrNull("savor.neo4j.database")?.getString()
-    val neo4jUser = config.propertyOrNull("savor.neo4j.user")?.getString()
-    val neo4jPassword = config.propertyOrNull("savor.neo4j.password")?.getString()
-}

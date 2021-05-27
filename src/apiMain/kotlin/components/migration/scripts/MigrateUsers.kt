@@ -1,11 +1,10 @@
-package core.database.scripts
-import core.Config
-import java.time.ZonedDateTime
-import core.database.Neo4j
+package components.migration.scripts
+
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
 
-class MigrateUsers(val config: Config, val neo4j: Neo4j, val connection: Connection) {
+class MigrateUsers(val neo4j: Neo4j, val connection: Connection) {
     val migratePeopleProc = """
         create or replace function migrate_people_proc(
             in pInternalId varchar(32),

@@ -1,11 +1,10 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 import java.sql.Types
 
-class MigrateEthnologue(val config: Config, val neo4j: Neo4j, val connection: Connection) {
+class MigrateEthnologue(val neo4j: Neo4j, val connection: Connection) {
     val migrateEthnologueProc = """
         create or replace function migrate_ethnologue_proc(
             in pInternalId varchar(32),

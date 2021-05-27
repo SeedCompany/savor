@@ -2,6 +2,9 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
     kotlin("multiplatform") version "1.4.32"
+    id("org.springframework.boot") version "2.5.0"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    kotlin("plugin.spring") version "1.5.10"
     application
 }
 
@@ -45,19 +48,18 @@ kotlin {
         val apiMain by getting {
             dependencies {
                 implementation("org.neo4j.driver:neo4j-java-driver:4.2.5")
-                implementation("org.mybatis:mybatis:3.5.7")
-                implementation("io.ktor:ktor-server-netty:1.4.0")
-                implementation("io.ktor:ktor-html-builder:1.4.0")
-                implementation("io.ktor:ktor-websockets:1.4.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-                runtimeOnly("org.postgresql:postgresql:42.2.20")
+//                implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+//                implementation("org.springframework.boot:spring-boot-starter-jdbc")
+                implementation("org.springframework.boot:spring-boot-starter-web")
+                implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+                implementation("org.jetbrains.kotlin:kotlin-reflect")
+                implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+                runtimeOnly("org.postgresql:postgresql")
             }
         }
         val apiTest by getting {
             dependencies {
-                implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+                implementation("org.springframework.boot:spring-boot-starter-test")
             }
         }
         val frontendMain by getting {
@@ -77,7 +79,7 @@ kotlin {
 }
 
 application {
-    mainClassName = "ServerKt"
+//    mainClassName = "ServerKt"
 }
 
 tasks.getByName<KotlinWebpack>("frontendBrowserProductionWebpack") {

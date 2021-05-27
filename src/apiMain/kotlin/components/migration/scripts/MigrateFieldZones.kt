@@ -1,16 +1,13 @@
-package core.database.scripts
+package components.migration.scripts
 
-import core.Config
-import core.database.Neo4j
+import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
-import java.sql.Types
 
-class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: Connection) {
-    val migrateFileVersionProc = """
-        create or replace function migrate_file_versions_proc(
-           in userPhone varchar(32),
-           in fileVersionName varchar(255),
-           in fileVersionSize int
+class MigrateFieldZones(val neo4j: Neo4j, val connection: Connection)  {
+    val migrateFieldZonesProc = """
+        create or replace function migrate_field_zones_proc(
+           in directorPhone varchar(32),
+           in fieldZoneName varchar(32)
         )
         returns INT
         language plpgsql
@@ -22,10 +19,10 @@ class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: 
             SELECT sp.sys_person_id 
             FROM sys_people AS sp
             INTO vPersonId
-            WHERE sp.phone = userPhone;
+            WHERE sp.phone = directorPhone;
             IF found THEN
-                INSERT INTO sc_file_versions("creator_sys_person_id", "name", "file_size")
-                VALUES (vPersonId, fileVersionName, fileVersionSize);
+                INSERT INTO sc_field_zone("director_sys_person_id", "name")
+                VALUES (vPersonId, fieldZoneName);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
@@ -36,22 +33,22 @@ class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: 
 
     init{
         val statement = this.connection.createStatement()
-        statement.execute(this.migrateFileVersionProc)
+        statement.execute(this.migrateFieldZonesProc)
         statement.close()
     }
 
-    public fun migrateFileVersions() {
-        val createFileVersionSQL = this.connection.prepareStatement(
+    public fun migrateFieldZones() {
+        val createFieldZoneSQL = this.connection.prepareStatement(
             """
-            select migrate_file_versions_proc from migrate_file_versions_proc(?, ?, ?);
+            select migrate_field_zones_proc from migrate_field_zones_proc(?, ?);
         """.trimIndent()
         )
         var count = 0
 
         neo4j.driver.session().readTransaction {
-            print("\nFile Version ")
+            print("\nField Zones ")
             val result = it.run(
-                "match (n:FileVersion) return count(n) as count"
+                "match (n:FieldZone) return count(n) as count"
             )
 
             while (result.hasNext()) {
@@ -67,13 +64,13 @@ class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: 
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """
-                        match (n:FileVersion)
+                        match (n:FieldZone)
                         with *
                         skip $i
                         limit 1
                         match (n)-[r {active: true}]->(prop:Property)
                         with * 
-                        match (n)-[:createdBy {active: true}]->(user:User)
+                        match (n)-[:director {active: true}]->(user:User)
                         -[:phone {active: true}]->(userPhone:Property) 
                         return 
                             n.id as id,
@@ -83,23 +80,17 @@ class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: 
                             userPhone.value as userPhone
                     """.trimIndent()
                 )
-                var fileVersionName: String? = null
                 var userPhone: String? = null
-                var fileVersionSize: Int? = null
+                var fieldZoneName: String? = null
 
                 while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
                     val propName = record.get("propName").asString()
-
                     userPhone = record.get("userPhone").asString()
                     when (propName) {
                         "name" -> {
-                            fileVersionName = record.get("propValue").asString()
+                            fieldZoneName = record.get("propValue").asString()
                         }
-                        "size" -> {
-                            fileVersionSize = record.get("propValue").asInt()
-                        }
-
                         else -> {
 //                            print(" failed to recognize property $propName ")
                         }
@@ -108,22 +99,15 @@ class MigrateFileVersions(val config: Config, val neo4j: Neo4j, val connection: 
                 it.commit()
                 it.close()
 
-                print("\n $userPhone, $fileVersionName, $fileVersionSize \n")
+                print("\n $userPhone \n")
 
-                createFileVersionSQL.setString(1, userPhone)
+                createFieldZoneSQL.setString(1, userPhone)
+                createFieldZoneSQL.setString(2, fieldZoneName)
 
-                createFileVersionSQL.setString(2, fileVersionName)
-                if (fileVersionSize != null) {
-                    createFileVersionSQL.setInt(3, fileVersionSize)
-                } else {
-                    createFileVersionSQL.setNull(3, Types.NULL)
-                }
-
-
-                val createResult = createFileVersionSQL.executeQuery()
+                val createResult = createFieldZoneSQL.executeQuery()
                 createResult.next()
                 val code = createResult.getInt(1)
-                print("code:$code")
+                print(" code:$code")
                 createResult.close()
             }
         }
