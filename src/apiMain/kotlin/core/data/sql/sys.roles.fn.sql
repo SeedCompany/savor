@@ -46,6 +46,7 @@ as $$
 declare
     vResponseCode INT;
     vSysRoleId INT;
+    vSysRoleId2 INT;
     vOrgId INT;
 begin
     SELECT sys_org_id
@@ -61,14 +62,14 @@ begin
         IF FOUND THEN
             SELECT sys_role_id
             FROM sys_role_grants
-            INTO vSysRoleId
+            INTO vSysRoleId2
             WHERE sys_role_grants.sys_role_id = vSysRoleId
                 AND sys_role_grants.table_name = pTableName
                 AND sys_role_grants.column_name = pColumnName
                 AND sys_role_grants.access_level = pAccessLevel;
             IF NOT FOUND THEN
                 INSERT INTO sys_role_grants("sys_role_id", "table_name", "column_name", "access_level")
-                VALUES (vOrgId, pTableName, pColumnName, pAccessLevel);
+                VALUES (vSysRoleId, pTableName, pColumnName, pAccessLevel);
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 1;

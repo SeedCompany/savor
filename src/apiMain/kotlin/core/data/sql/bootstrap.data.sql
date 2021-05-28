@@ -26,5 +26,8 @@ select * from sys_create_role('Consultant', 'Seed Company');
 
 -- SYS ROLE GRANTS
 select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_people', 'public_first_name', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'name', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'created_at', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'sensitivity', 'Read');
 
 -- ROLE MEMBERSHIPS

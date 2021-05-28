@@ -181,10 +181,21 @@ CREATE OR REPLACE FUNCTION language_tfun_role_member_added()
   LANGUAGE PLPGSQL
   AS
 $$
+declare
+    grantRow sys_role_grants%ROWTYPE;
 BEGIN
 -- if the role is a certain role, add the new member to the security table
-
-
+begin
+    for grantRow in
+         select column_name
+         from sys_role_grants
+         into vColumnName
+         where table_name = 'sys_locations'
+    loop
+	    -- loop through the grants and ensure the user is added to all rows
+	    -- in the language table with the columns
+    end loop;
+end;
 
 --	IF NEW.last_name <> OLD.last_name THEN
 --		 INSERT INTO employee_audits(employee_id,last_name,changed_on)
@@ -195,6 +206,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS language_trigger_role_member_added ON public.sys_role_memberships;
 CREATE TRIGGER language_trigger_role_member_added
   AFTER UPDATE
   ON sys_role_memberships
@@ -217,7 +229,7 @@ with no data;
 
 REFRESH MATERIALIZED VIEW sys_locations_secure_view;
 
-CREATE UNIQUE INDEX sys_locations_secure_view_uniq
+CREATE UNIQUE INDEX IF NOT EXISTS sys_locations_secure_view_uniq
     ON sys_locations_secure_view (__sys_person_id, __sys_location_id);
 
 -- LANGUAGE -----------------------------------------------------------------
