@@ -48,8 +48,6 @@ kotlin {
         val apiMain by getting {
             dependencies {
                 implementation("org.neo4j.driver:neo4j-java-driver:4.2.5")
-//                implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-//                implementation("org.springframework.boot:spring-boot-starter-jdbc")
                 implementation("org.springframework.boot:spring-boot-starter-web")
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")

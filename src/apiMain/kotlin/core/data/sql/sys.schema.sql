@@ -1,10 +1,33 @@
 -- system schema. org specific schema should go in an org-specific file.
 
+-- ENUMS ----
+
+-- todo
+DO $$ BEGIN
+    create type mime_type as enum (
+          'A',
+          'B',
+          'C'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type sensitivity as enum (
+		'Low',
+		'Medium',
+		'High'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
 -- SCRIPTURE REFERENCE -----------------------------------------------------------------
 
 -- todo
 DO $$ BEGIN
-    create type enum_book_name as enum (
+    create type book_name as enum (
           'Genesis',
           'Matthew',
           'Revelation'
@@ -15,8 +38,8 @@ END; $$;
 
 create table if not exists sys_scripture_references (
     sys_scripture_reference_id serial primary key,
-    book_start enum_book_name,
-    book_end enum_book_name,
+    book_start book_name,
+    book_end book_name,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     chapter_start int,
     chapter_end int,
@@ -28,7 +51,7 @@ create table if not exists sys_scripture_references (
 -- LOCATION -----------------------------------------------------------------
 
 DO $$ BEGIN
-    create type enum_location_type as enum (
+    create type location_type as enum (
           'City',
           'County',
           'State',
@@ -43,7 +66,8 @@ create table if not exists sys_locations (
 	sys_location_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) unique not null,
-	type enum_location_type not null
+	sensitivity sensitivity not null default 'High',
+	type location_type not null
 );
 
 -- LANGUAGE -----------------------------------------------------------------
@@ -106,6 +130,25 @@ create table if not exists sys_people (
     foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
 
+create table if not exists sys_people_history (
+    sys_people_history_id serial primary key,
+    sys_person_id int,
+    about text,
+    created_at timestamp,
+    phone varchar(32),
+	picture varchar(255),
+    primary_sys_org_id int,
+    private_first_name varchar(32),
+    private_last_name varchar(32),
+    public_first_name varchar(32),
+    public_last_name varchar(32),
+    primary_sys_location_id int,
+    private_full_name varchar(64),
+    public_full_name varchar(64),
+    time_zone varchar(32),
+    title varchar(255)
+);
+
 -- Education
 
 create table if not exists sys_education_entries (
@@ -128,7 +171,7 @@ create table if not exists sys_education_by_person (
 -- ORGANIZATIONS ------------------------------------------------------------
 
 DO $$ BEGIN
-    create type enum_person_to_org_relationship_type as enum (
+    create type person_to_org_relationship_type as enum (
           'Vendor',
           'Customer',
           'Investor',
@@ -177,11 +220,78 @@ create table if not exists sys_people_to_org_relationship_type (
     begin_at timestamp not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	end_at timestamp,
-	relationship_type enum_person_to_org_relationship_type,
+	relationship_type person_to_org_relationship_type,
 	foreign key (sys_people_to_org_id) references sys_people_to_org_relationships(sys_people_to_org_id)
 );
 
 -- ROLES --------------------------------------------------------------------
+
+DO $$ BEGIN
+    create type table_name as enum (
+		'sys_scripture_references',
+		'sys_locations',
+		'sil_language_codes',
+		'sil_country_codes',
+		'sil_language_index',
+		'sil_table_of_languages',
+		'sys_people',
+		'sys_people_history',
+		'sys_education_entries',
+		'sys_education_by_person',
+		'sys_organizations',
+		'sys_people_to_org_relationships',
+		'sys_people_to_org_relationship_type',
+		'sys_roles',
+		'sys_role_grants',
+		'sys_role_memberships',
+		'sys_users',
+		'sys_projects',
+		'sys_tokens',
+
+		'sc_funding_account',
+		'sc_field_zone',
+		'sc_field_regions',
+		'sc_locations',
+		'sc_organizations',
+		'sc_organization_locations',
+		'sc_partners',
+		'sc_language_goal_definitions',
+		'sc_languages',
+		'sc_language_locations',
+		'sc_language_goals',
+		'sc_known_languages_by_person',
+		'sc_people',
+		'sc_person_unavailabilities',
+		'sc_directories',
+		'sc_files',
+		'sc_file_versions',
+		'sc_projects',
+		'sc_partnerships',
+		'sc_budgets',
+		'sc_budget_records',
+		'sc_project_locations',
+		'sc_project_members',
+		'sc_project_member_roles',
+		'sc_language_engagements',
+		'sc_products',
+		'sc_product_scripture_references',
+		'sc_internship_engagements',
+		'sc_ceremonies'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+-- todo
+DO $$ BEGIN
+    create type access_level as enum (
+          'Read',
+          'Write',
+          'Admin'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
 
 create table if not exists sys_roles (
 	sys_role_id serial primary key,
@@ -190,6 +300,15 @@ create table if not exists sys_roles (
 	name varchar(255) not null,
 	unique (sys_org_id, name),
 	foreign key (sys_org_id) references sys_organizations(sys_org_id)
+);
+
+create table if not exists sys_role_grants (
+	sys_role_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	table_name table_name not null,
+	column_name varchar(32) not null,
+	access_level access_level not null,
+	foreign key (sys_role_id) references sys_roles(sys_role_id)
 );
 
 create table if not exists sys_role_memberships (
@@ -280,79 +399,6 @@ create table if not exists sys_tokens (
 -- SECURE TABLES ------------------------------------------------------------------------
 
 
-DO $$ BEGIN
-    create type enum_table_name as enum (
-		'sc_engagements',
-		'sc_involvements',
-		'sc_languages',
-		'sc_org_to_org_rels',
-		'sc_organizations',
-		'sc_person_to_person_rels',
-		'sc_people',
-		'sc_partner_performance',
-		'sc_projects',
-		'sc_projects_to_engagements',
-		'sc_roles',
-		'sc_role_memberships',
-
-        'sys_column_access_by_group',
-        'sys_column_access_by_user',
-        'sys_groups',
-        'sys_group_membership_by_person',
-		'sys_people',
-		'sys_row_access_by_group',
-		'sys_row_access_by_user',
-		'sys_tokens',
-        'sys_users',
-        'sys_column_security',
-        'sys_row_security'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
-DO $$ BEGIN
-	create type enum_column_name as enum (
-		'column_name',
-		'created_at',
-		'email',
-		'engagement_id',
-		'first_name',
-		'full_name',
-		'group_id',
-		'id',
-		'internal_id',
-		'language_id',
-		'last_name',
-		'name',
-		'password',
-		'private_name',
-		'private_name_override',
-		'project_id',
-		'public_name',
-		'public_name_override',
-		'row_id',
-		'sys_group_id',
-		'sys_person_id',
-		'sys_project_id',
-		'table_name',
-		'token',
-		'user_id'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
--- todo
-DO $$ BEGIN
-    create type enum_access_level as enum (
-          'Read',
-          'Write',
-          'Admin'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
 
 --create or replace function x_read_sc_people(
 --    in pSysPersonId varchar(255)

@@ -2,15 +2,6 @@
 
 -- ENUMs ----------------------------------------------------------
 
-DO $$ BEGIN
-    create type sc_enum_sensitivity as enum (
-		'Low',
-		'Medium',
-		'High'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
 
 -- ACCOUNTING TABLES --------------------------------------------------------
 
@@ -45,7 +36,7 @@ create table if not exists sc_locations (
 	funding_account_number varchar(32),
 	iso_alpha_3 char(3),
 	name varchar(32) unique not null,
-	type enum_location_type not null,
+	type location_type not null,
 	foreign key (sys_location_id) references sys_locations(sys_location_id),
 	foreign key (funding_account_number) references sc_funding_account(account_number)
 );
@@ -70,7 +61,7 @@ create table if not exists sc_organization_locations(
 );
 
 DO $$ BEGIN
-    create type sc_enum_financial_reporting_types as enum (
+    create type sc_financial_reporting_types as enum (
 		'A',
 		'B',
 		'C'
@@ -81,7 +72,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_partner_types as enum (
+    create type sc_partner_types as enum (
 		'A',
 		'B',
 		'C'
@@ -94,13 +85,13 @@ create table if not exists sc_partners (
 	sys_org_id int primary key,
 	active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	financial_reporting_types sc_enum_financial_reporting_types[],
+	financial_reporting_types sc_financial_reporting_types[],
 	is_global_innovations_client bool,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	pmc_entity_code varchar(32),
 	point_of_contact_sys_person_id int,
 	foreign key (point_of_contact_sys_person_id) references sys_people(sys_person_id),
-	types sc_enum_partner_types[],
+	types sc_partner_types[],
 	foreign key (sys_org_id) references sys_organizations(sys_org_id)
 );
 
@@ -123,7 +114,7 @@ create table if not exists sc_languages (
 	name varchar(255) unique not null,
 	population_override int,
 	registry_of_dialects_code varchar(32),
-	sensitivity sc_enum_sensitivity,
+	sensitivity sensitivity,
 	sign_language_code varchar(32),
 	sponsor_estimated_eng_date timestamp,
 	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
@@ -177,16 +168,6 @@ create table if not exists sc_person_unavailabilities (
 
 -- FILES & DIRECTORIES ----------------------------------------------------------
 
--- todo
-DO $$ BEGIN
-    create type enum_mime_type as enum (
-          'A',
-          'B',
-          'C'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
 
 create table if not exists sc_directories (
     sc_directory_id serial primary key,
@@ -212,7 +193,7 @@ create table if not exists sc_file_versions (
     category varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     creator_sys_person_id int not null,
---    mime_type enum_mime_type not null,
+--    mime_type mime_type not null,
     name varchar(255) not null,
 --    sc_file_id int not null,
 --    sc_file_url varchar(255) not null,
@@ -225,7 +206,7 @@ create table if not exists sc_file_versions (
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_project_step as enum (
+    create type sc_project_step as enum (
 		'A',
 		'B',
 		'C'
@@ -236,7 +217,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_project_status as enum (
+    create type sc_project_status as enum (
 		'A',
 		'B',
 		'C'
@@ -247,15 +228,15 @@ END; $$;
 
 --create table if not exists sc_change_to_plans (
 --    sc_change_to_plan_id serial primary key,
---    type sc_enum_change_to_plan_type,
+--    type sc_change_to_plan_type,
 --    summary text,
---    status sc_enum_change_to_plan_status,
+--    status sc_change_to_plan_status,
 --	created_at timestamp not null default CURRENT_TIMESTAMP
 --);
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_change_to_plan_type as enum (
+    create type sc_change_to_plan_type as enum (
 		'a',
 		'b',
 		'c'
@@ -266,7 +247,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_change_to_plan_status as enum (
+    create type sc_change_to_plan_status as enum (
 		'a',
 		'b',
 		'c'
@@ -293,9 +274,9 @@ create table if not exists sc_projects (
 	owning_organization_sys_org_id int,
 	primary_sys_location_id int,
 	root_directory_sc_directory_id int,
-	status sc_enum_project_status,
+	status sc_project_status,
 	status_changed_at timestamp,
-	step sc_enum_project_step,
+	step sc_project_step,
 --	primary key (project_sys_org_id, sc_change_to_plan_id),
 	foreign key (sys_project_id) references sys_projects(sys_project_id),
 	foreign key (root_directory_sc_directory_id) references sc_directories(sc_directory_id),
@@ -322,7 +303,7 @@ create table if not exists sc_partnerships (
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_budget_status as enum (
+    create type sc_budget_status as enum (
 		'A',
 		'B',
 		'C'
@@ -335,7 +316,7 @@ create table if not exists sc_budgets (
     sc_budget_id serial primary key,
     sys_project_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-    status sc_enum_budget_status,
+    status sc_budget_status,
     universal_template_sys_file_id int,
     universal_template_file_url varchar(255),
 	foreign key (sys_project_id) references sys_projects(sys_project_id),
@@ -399,7 +380,7 @@ create table if not exists sc_project_member_roles (
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_engagement_status as enum (
+    create type sc_engagement_status as enum (
 		'A',
 		'B',
 		'C'
@@ -410,7 +391,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_project_engagement_tag as enum (
+    create type sc_project_engagement_tag as enum (
 		'A',
 		'B',
 		'C'
@@ -438,10 +419,10 @@ create table if not exists sc_language_engagements (
 	paratext_registry_id varchar(32),
 	pnp varchar(255),
 	pnp_sc_file_version_id int,
-	product_engagement_tag sc_enum_project_engagement_tag,
+	product_engagement_tag sc_project_engagement_tag,
 	start_date timestamp,
 	start_date_override timestamp,
-	status sc_enum_engagement_status,
+	status sc_engagement_status,
 	updated_at timestamp,
 	primary key (sys_project_id, sil_ethnologue_id),
 --	sc_change_to_plan_id),
@@ -455,7 +436,7 @@ create table if not exists sc_language_engagements (
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_product_mediums as enum (
+    create type sc_product_mediums as enum (
 		'A',
 		'B',
 		'C'
@@ -466,7 +447,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_product_methodologies as enum (
+    create type sc_product_methodologies as enum (
 		'A',
 		'B',
 		'C'
@@ -477,7 +458,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_product_purposes as enum (
+    create type sc_product_purposes as enum (
 		'A',
 		'B',
 		'C'
@@ -488,7 +469,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_product_type as enum (
+    create type sc_product_type as enum (
 		'Film',
 		'Literacy Material',
 		'Scripture',
@@ -504,10 +485,10 @@ create table if not exists sc_products (
 --    sc_change_to_plan_id int not null default 0,
     active bool,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    mediums sc_enum_product_mediums[],
-    methodologies sc_enum_product_methodologies[],
-    purposes sc_enum_product_purposes[],
-    type sc_enum_product_type,
+    mediums sc_product_mediums[],
+    methodologies sc_product_methodologies[],
+    purposes sc_product_purposes[],
+    type sc_product_type,
     name varchar(64),
     primary key (sc_product_id)
 --    sc_change_to_plan_id)
@@ -531,7 +512,7 @@ create table if not exists sc_product_scripture_references (
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_internship_methodology as enum (
+    create type sc_internship_methodology as enum (
 		'A',
 		'B',
 		'C'
@@ -542,7 +523,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_enum_internship_position as enum (
+    create type sc_internship_position as enum (
 		'A',
 		'B',
 		'C'
@@ -568,12 +549,12 @@ create table if not exists sc_internship_engagements (
 	intern_sys_person_id int,
 	last_reactivated_at timestamp,
 	mentor_sys_person_id int,
-	methodology sc_enum_internship_methodology,
+	methodology sc_internship_methodology,
 	paratext_registry_id varchar(32),
-	position sc_enum_internship_position,
+	position sc_internship_position,
 	start_date timestamp,
 	start_date_override timestamp,
-	status sc_enum_engagement_status,
+	status sc_engagement_status,
 	updated_at timestamp,
 	primary key (project_sys_org_id, sil_ethnologue_id),
 --	sc_change_to_plan_id),
@@ -606,7 +587,7 @@ create table if not exists sc_ceremonies (
 
 
 DO $$ BEGIN
-    create type sc_enum_involvements as enum (
+    create type sc_involvements as enum (
 		'CIT',
 		'Engagements'
 	);
@@ -615,7 +596,7 @@ DO $$ BEGIN
 END; $$;
 
 DO $$ BEGIN
-    create type sc_enum_people_transitions as enum (
+    create type sc_people_transitions as enum (
 		'New Org',
 		'Other'
 	);
@@ -624,7 +605,7 @@ DO $$ BEGIN
 END; $$;
 
 DO $$ BEGIN
-    create type sc_enum_org_transitions as enum (
+    create type sc_org_transitions as enum (
 		'To Manager',
 		'To Other'
 	);
@@ -683,7 +664,7 @@ END; $$;
 --
 --create table if not exists sc_org_transitions (
 --    sc_internal_org_id varchar(32) not null,
---    transition_type sc_enum_org_transitions not null,
+--    transition_type sc_org_transitions not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
 --    primary key (sc_internal_org_id),
 --    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
@@ -714,7 +695,7 @@ END; $$;
 --
 --create table if not exists sys_people_transitions (
 --    sys_person_id int not null,
---    transition_type sc_enum_people_transitions not null,
+--    transition_type sc_people_transitions not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
 --    primary key (sys_person_id, transition_type),
 --    foreign key (sys_person_id) references sys_people(sys_person_id)
@@ -722,7 +703,7 @@ END; $$;
 --
 --create table if not exists sc_involvements (
 --    sc_internal_org_id varchar(32) not null,
---    type sc_enum_involvements not null,
+--    type sc_involvements not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
 --	primary key (sc_internal_org_id, type),
 --    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
