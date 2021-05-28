@@ -15,33 +15,35 @@ END $$;
 
 -- ENUMs -------------------------------------------------------------------------------
 
-drop type if exists enum_table_name cascade;
-drop type if exists enum_column_name cascade;
-drop type if exists enum_location_type cascade;
-drop type if exists enum_person_to_org_relationship_type cascade;
-drop type if exists enum_group_type cascade;
-drop type if exists enum_mime_type cascade;
-drop type if exists enum_book_name cascade;
+drop type if exists table_name cascade;
+drop type if exists column_name cascade;
+drop type if exists location_type cascade;
+drop type if exists person_to_org_relationship_type cascade;
+drop type if exists group_type cascade;
+drop type if exists mime_type cascade;
+drop type if exists book_name cascade;
+drop type if exists access_level cascade;
+drop type if exists sensitivity cascade;
 
-drop type if exists sc_enum_involvements cascade;
-drop type if exists sc_enum_people_transitions cascade;
-drop type if exists sc_enum_org_transitions cascade;
-drop type if exists sc_enum_sensitivity cascade;
-drop type if exists sc_enum_financial_reporting_types cascade;
-drop type if exists sc_enum_partner_types cascade;
-drop type if exists sc_enum_project_step cascade;
-drop type if exists sc_enum_project_status cascade;
-drop type if exists sc_enum_budget_status cascade;
-drop type if exists sc_enum_engagement_status cascade;
-drop type if exists sc_enum_project_engagement_tag cascade;
-drop type if exists sc_enum_internship_methodology cascade;
-drop type if exists sc_enum_internship_position cascade;
-drop type if exists sc_enum_product_mediums cascade;
-drop type if exists sc_enum_product_methodologies cascade;
-drop type if exists sc_enum_product_purposes cascade;
-drop type if exists sc_enum_product_type cascade;
-drop type if exists sc_enum_change_to_plan_type cascade;
-drop type if exists sc_enum_change_to_plan_status cascade;
+drop type if exists sc_involvements cascade;
+drop type if exists sc_people_transitions cascade;
+drop type if exists sc_org_transitions cascade;
+drop type if exists sc_sensitivity cascade;
+drop type if exists sc_financial_reporting_types cascade;
+drop type if exists sc_partner_types cascade;
+drop type if exists sc_project_step cascade;
+drop type if exists sc_project_status cascade;
+drop type if exists sc_budget_status cascade;
+drop type if exists sc_engagement_status cascade;
+drop type if exists sc_project_engagement_tag cascade;
+drop type if exists sc_internship_methodology cascade;
+drop type if exists sc_internship_position cascade;
+drop type if exists sc_product_mediums cascade;
+drop type if exists sc_product_methodologies cascade;
+drop type if exists sc_product_purposes cascade;
+drop type if exists sc_product_type cascade;
+drop type if exists sc_change_to_plan_type cascade;
+drop type if exists sc_change_to_plan_status cascade;
 
 -- FUNCTIONS ---------------------------------------------------------------------------
 

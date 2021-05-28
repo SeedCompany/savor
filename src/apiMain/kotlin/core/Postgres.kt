@@ -30,13 +30,15 @@ class Postgres(
         val sysSchema = File("./src/apiMain/kotlin/core/data/sql/sys.schema.sql").readText()
         val scSchema = File("./src/apiMain/kotlin/core/data/sql/sc.schema.sql").readText()
 
-        val sysAuthenFun = File("./src/apiMain/kotlin/core/data/sql/sys.authentication.functions.sql").readText()
+        val sysAuthenFn = File("./src/apiMain/kotlin/core/data/sql/sys.authen.fn.sql").readText()
+        val sysRoleFn = File("./src/apiMain/kotlin/core/data/sql/sys.roles.fn.sql").readText()
 
         val data = File("./src/apiMain/kotlin/core/data/sql/bootstrap.data.sql").readText()
 
         statement.execute(sysSchema)
         statement.execute(scSchema)
-        statement.execute(sysAuthenFun)
+        statement.execute(sysAuthenFn)
+        statement.execute(sysRoleFn)
         statement.execute(data)
 
         statement.close()

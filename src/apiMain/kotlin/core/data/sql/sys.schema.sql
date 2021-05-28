@@ -2,6 +2,16 @@
 
 -- ENUMS ----
 
+DO $$ BEGIN
+    create type access_level as enum (
+          'Read',
+          'Write',
+          'Admin'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
 -- todo
 DO $$ BEGIN
     create type mime_type as enum (
@@ -22,6 +32,90 @@ DO $$ BEGIN
 	EXCEPTION
 	WHEN duplicate_object THEN null;
 END; $$;
+
+
+-- ROLES --------------------------------------------------------------------
+
+create table if not exists sys_roles (
+	sys_role_id serial primary key,
+	sys_org_id int,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	name varchar(255) not null,
+	unique (sys_org_id, name)
+);
+
+DO $$ BEGIN
+    create type table_name as enum (
+		'sys_scripture_references',
+		'sys_locations',
+		'sil_language_codes',
+		'sil_country_codes',
+		'sil_language_index',
+		'sil_table_of_languages',
+		'sys_people',
+		'sys_people_history',
+		'sys_education_entries',
+		'sys_education_by_person',
+		'sys_organizations',
+		'sys_people_to_org_relationships',
+		'sys_people_to_org_relationship_type',
+		'sys_roles',
+		'sys_role_grants',
+		'sys_role_memberships',
+		'sys_users',
+		'sys_projects',
+		'sys_tokens',
+
+		'sc_funding_account',
+		'sc_field_zone',
+		'sc_field_regions',
+		'sc_locations',
+		'sc_organizations',
+		'sc_organization_locations',
+		'sc_partners',
+		'sc_language_goal_definitions',
+		'sc_languages',
+		'sc_language_locations',
+		'sc_language_goals',
+		'sc_known_languages_by_person',
+		'sc_people',
+		'sc_person_unavailabilities',
+		'sc_directories',
+		'sc_files',
+		'sc_file_versions',
+		'sc_projects',
+		'sc_partnerships',
+		'sc_budgets',
+		'sc_budget_records',
+		'sc_project_locations',
+		'sc_project_members',
+		'sc_project_member_roles',
+		'sc_language_engagements',
+		'sc_products',
+		'sc_product_scripture_references',
+		'sc_internship_engagements',
+		'sc_ceremonies'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+create table if not exists sys_role_grants (
+	sys_role_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	table_name table_name not null,
+	column_name varchar(32) not null,
+	access_level access_level not null,
+	primary key (sys_role_id, table_name, column_name, access_level),
+	foreign key (sys_role_id) references sys_roles(sys_role_id)
+);
+
+create table if not exists sys_role_memberships (
+	sys_person_id int,
+	sys_role_id int,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	foreign key (sys_role_id) references sys_roles(sys_role_id)
+);
 
 -- SCRIPTURE REFERENCE -----------------------------------------------------------------
 
@@ -69,6 +163,57 @@ create table if not exists sys_locations (
 	sensitivity sensitivity not null default 'High',
 	type location_type not null
 );
+
+create table if not exists sys_locations_security (
+    __sys_person_id int not null,
+    __sys_location_id int not null,
+	_sys_location_id access_level,
+	_created_at access_level,
+	_name access_level,
+	_sensitivity access_level,
+	_type access_level,
+	foreign key (__sys_location_id) references sys_locations(sys_location_id)
+);
+
+-- todo add entry to security table when certain roles have members added
+CREATE OR REPLACE FUNCTION language_tfun_role_member_added()
+  RETURNS TRIGGER
+  LANGUAGE PLPGSQL
+  AS
+$$
+BEGIN
+
+
+
+
+	IF NEW.last_name <> OLD.last_name THEN
+		 INSERT INTO employee_audits(employee_id,last_name,changed_on)
+		 VALUES(OLD.id,OLD.last_name,now());
+	END IF;
+
+	RETURN NEW;
+END;
+$$
+
+CREATE TRIGGER language_trigger_role_member_added
+  AFTER UPDATE
+  ON sys_role_memberships
+  FOR EACH ROW
+  EXECUTE PROCEDURE language_role_member_added();
+
+
+
+create materialized view if not exists sys_locations_secure_view as
+    select *
+    from sys_locations_security
+    join sys_locations
+    on sys_locations_security.__sys_location_id = sys_locations.sys_location_id
+with no data;
+
+REFRESH MATERIALIZED VIEW sys_locations_secure_view;
+
+CREATE UNIQUE INDEX sys_locations_secure_view_uniq
+    ON sys_locations_secure_view (__sys_person_id, __sys_location_id);
 
 -- LANGUAGE -----------------------------------------------------------------
 
@@ -130,8 +275,20 @@ create table if not exists sys_people (
     foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
 
+-- fkey for sys_role_memberships
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_memberships_person_id_fkey') THEN
+        ALTER TABLE sys_role_memberships
+            ADD CONSTRAINT sys_role_memberships_person_id_fkey
+            foreign key (sys_person_id) references sys_people(sys_person_id);
+    END IF;
+END;
+$$;
+
 create table if not exists sys_people_history (
     sys_people_history_id serial primary key,
+    sys_people_history_created_at timestamp not null default CURRENT_TIMESTAMP,
     sys_person_id int,
     about text,
     created_at timestamp,
@@ -147,6 +304,26 @@ create table if not exists sys_people_history (
     public_full_name varchar(64),
     time_zone varchar(32),
     title varchar(255)
+);
+
+create table if not exists sys_people_security (
+    _sys_person_id int,
+    sys_person_id access_level,
+    about access_level,
+    created_at access_level,
+    phone access_level,
+	picture access_level,
+    primary_sys_org_id access_level,
+    private_first_name access_level,
+    private_last_name access_level,
+    public_first_name access_level,
+    public_last_name access_level,
+    primary_sys_location_id access_level,
+    private_full_name access_level,
+    public_full_name access_level,
+    time_zone access_level,
+    title access_level,
+    foreign key (_sys_person_id) references sys_people(sys_person_id)
 );
 
 -- Education
@@ -178,12 +355,24 @@ create table if not exists sys_organizations (
 	foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
 
+-- fkey for sys_people
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'primary_sys_org_id_fkey') THEN
         ALTER TABLE sys_people
             ADD CONSTRAINT primary_sys_org_id_fkey
             foreign key (primary_sys_org_id) references sys_organizations(sys_org_id);
+    END IF;
+END;
+$$;
+
+-- fkey for sys_roles
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_org_id_fkey') THEN
+        ALTER TABLE sys_roles
+            ADD CONSTRAINT sys_role_org_id_fkey
+            foreign key (sys_org_id) references sys_organizations(sys_org_id);
     END IF;
 END;
 $$;
@@ -224,100 +413,6 @@ create table if not exists sys_people_to_org_relationship_type (
 	foreign key (sys_people_to_org_id) references sys_people_to_org_relationships(sys_people_to_org_id)
 );
 
--- ROLES --------------------------------------------------------------------
-
-DO $$ BEGIN
-    create type table_name as enum (
-		'sys_scripture_references',
-		'sys_locations',
-		'sil_language_codes',
-		'sil_country_codes',
-		'sil_language_index',
-		'sil_table_of_languages',
-		'sys_people',
-		'sys_people_history',
-		'sys_education_entries',
-		'sys_education_by_person',
-		'sys_organizations',
-		'sys_people_to_org_relationships',
-		'sys_people_to_org_relationship_type',
-		'sys_roles',
-		'sys_role_grants',
-		'sys_role_memberships',
-		'sys_users',
-		'sys_projects',
-		'sys_tokens',
-
-		'sc_funding_account',
-		'sc_field_zone',
-		'sc_field_regions',
-		'sc_locations',
-		'sc_organizations',
-		'sc_organization_locations',
-		'sc_partners',
-		'sc_language_goal_definitions',
-		'sc_languages',
-		'sc_language_locations',
-		'sc_language_goals',
-		'sc_known_languages_by_person',
-		'sc_people',
-		'sc_person_unavailabilities',
-		'sc_directories',
-		'sc_files',
-		'sc_file_versions',
-		'sc_projects',
-		'sc_partnerships',
-		'sc_budgets',
-		'sc_budget_records',
-		'sc_project_locations',
-		'sc_project_members',
-		'sc_project_member_roles',
-		'sc_language_engagements',
-		'sc_products',
-		'sc_product_scripture_references',
-		'sc_internship_engagements',
-		'sc_ceremonies'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
--- todo
-DO $$ BEGIN
-    create type access_level as enum (
-          'Read',
-          'Write',
-          'Admin'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
-create table if not exists sys_roles (
-	sys_role_id serial primary key,
-	sys_org_id int,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	name varchar(255) not null,
-	unique (sys_org_id, name),
-	foreign key (sys_org_id) references sys_organizations(sys_org_id)
-);
-
-create table if not exists sys_role_grants (
-	sys_role_id int not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	table_name table_name not null,
-	column_name varchar(32) not null,
-	access_level access_level not null,
-	foreign key (sys_role_id) references sys_roles(sys_role_id)
-);
-
-create table if not exists sys_role_memberships (
-	sys_person_id int,
-	sys_role_id int,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	foreign key (sys_role_id) references sys_roles(sys_role_id),
-	foreign key (sys_person_id) references sys_people(sys_person_id)
-);
 
 -- USERS ---------------------------------------------------------------------
 
@@ -330,6 +425,16 @@ create table if not exists sys_users(
 	foreign key (sys_person_id) references sys_people(sys_person_id),
 	foreign key (owning_sys_org_id) references sys_organizations(sys_org_id)
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loc_sec_sys_person_id_fkey') THEN
+        ALTER TABLE sys_locations_security
+            ADD CONSTRAINT loc_sec_sys_person_id_fkey
+            foreign key (__sys_person_id) references sys_users(sys_person_id);
+    END IF;
+END;
+$$;
 
 -- PROJECTS ------------------------------------------------------------------
 
