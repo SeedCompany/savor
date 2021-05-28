@@ -1,16 +1,17 @@
--- data.sql
+-- bootstrap.data.sql
 
--- SYS PEOPLE
-insert into sys_people ("public_first_name") values ('Michael');
-insert into sys_people ("public_first_name") values ('Jocelyn');
-insert into sys_people ("public_first_name") values ('Elizabeth');
-insert into sys_people ("public_first_name") values ('David');
+-- SYS ORGANIZATIONS
+insert into sys_organizations ("name") values ('Seed Company') on conflict do nothing;
+insert into sys_organizations ("name") values ('SIL') on conflict  do nothing;
+insert into sys_organizations ("name") values ('Wycliffe USA') on conflict do nothing;
 
--- SC USERS
---select * from sys_register_proc('sc_admin@asdf.com','password','token1', 1); -- assumes org id of 1 is valid
---select * from sys_register_proc('sc_project_manager@asdf.com','password','token1', 1); -- assumes org id of 1 is valid
---select * from sys_register_proc('sc_regional_director@asdf.com','password','token1', 1); -- assumes org id of 1 is valid
---select * from sys_register_proc('sc_consultant@asdf.com','password','token1', 1); -- assumes org id of 1 is valid
+-- SYS USERS
+select * from sys_register('devops@tsco.org', 'asdf', 'Seed Company');
+select * from sys_register('michael_marshall@tsco.org', 'asdf', 'Seed Company');
+select * from sys_register('sc_admin@asdf.com', 'asdf', 'Seed Company');
+select * from sys_register('sc_project_manager@asdf.com', 'asdf', 'Seed Company');
+select * from sys_register('sc_regional_director@asdf.com', 'asdf', 'Seed Company');
+select * from sys_register('sc_consultant@asdf.com', 'asdf', 'Seed Company');
 
 -- GROUPS
 --insert into sys_groups ("name") values ('sys_admins') on conflict ("name") do nothing;
@@ -25,11 +26,6 @@ insert into sys_people ("public_first_name") values ('David');
 --select sys_add_member('sc_project_manager@asdf.com', 'sc_project_managers');
 --select sys_add_member('sc_regional_director@asdf.com', 'sc_regional_directors');
 --select sys_add_member('sc_consultant@asdf.com', 'sc_consultants');
-
--- SYS ORGANIZATIONS
-insert into sys_organizations ("name") values ('Seed Company') on conflict do nothing;
-insert into sys_organizations ("name") values ('SIL') on conflict  do nothing;
-insert into sys_organizations ("name") values ('Wycliffe USA') on conflict do nothing;
 
 -- SC ORGANIZATIONS
 --select sc_add_org('Seed Company', 'org101');

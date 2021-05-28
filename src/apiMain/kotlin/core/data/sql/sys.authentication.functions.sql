@@ -1,8 +1,7 @@
 create or replace function sys_register(
-    in pEmail VARCHAR ( 255 ),
-    in pPassword VARCHAR ( 50 ),
-    in pToken VARCHAR ( 512 ),
-    in pOrgId INT
+    in pEmail VARCHAR(255),
+    in pPassword VARCHAR(50),
+    in pOrgName VARCHAR(255)
 )
 returns INT
 language plpgsql
@@ -10,20 +9,27 @@ as $$
 declare
     vResponseCode INT;
     vSysPersonId INT;
+    vOrgId INT;
 begin
     SELECT sys_person_id
     FROM sys_users
     INTO vSysPersonId
     WHERE sys_users.email = pEmail;
     IF NOT found THEN
-        INSERT INTO sys_people VALUES (DEFAULT)
-        RETURNING sys_person_id
-        INTO vSysPersonId;
-        INSERT INTO sys_users("sys_person_id", "email", "password", "owning_sys_org_id")
-        VALUES (vSysPersonId, pEmail, pPassword, pOrgId);
-        INSERT INTO sys_tokens("token", "sys_person_id")
-        VALUES (pToken, vSysPersonId);
-        vResponseCode := 0;
+        SELECT sys_org_id
+        FROM sys_organizations
+        INTO vOrgId
+        WHERE sys_organizations.name = pOrgName;
+        IF found THEN
+            INSERT INTO sys_people VALUES (DEFAULT)
+            RETURNING sys_person_id
+            INTO vSysPersonId;
+            INSERT INTO sys_users("sys_person_id", "email", "password", "owning_sys_org_id")
+            VALUES (vSysPersonId, pEmail, pPassword, vOrgId);
+            vResponseCode := 0;
+        ELSE
+            vResponseCode := 1;
+        END IF;
     ELSE
         vResponseCode := 1;
     END IF;

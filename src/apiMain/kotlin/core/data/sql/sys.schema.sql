@@ -170,24 +170,6 @@ create table if not exists sys_education_by_person (
 
 -- ORGANIZATIONS ------------------------------------------------------------
 
-DO $$ BEGIN
-    create type person_to_org_relationship_type as enum (
-          'Vendor',
-          'Customer',
-          'Investor',
-          'Associate',
-          'Employee',
-          'Member',
-		  'Executive',
-		  'President/CEO',
-          'Board of Directors',
-          'Retired',
-          'Other'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
 create table if not exists sys_organizations (
 	sys_org_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -205,6 +187,24 @@ BEGIN
     END IF;
 END;
 $$;
+
+DO $$ BEGIN
+    create type person_to_org_relationship_type as enum (
+          'Vendor',
+          'Customer',
+          'Investor',
+          'Associate',
+          'Employee',
+          'Member',
+		  'Executive',
+		  'President/CEO',
+          'Board of Directors',
+          'Retired',
+          'Other'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
 
 create table if not exists sys_people_to_org_relationships (
     sys_people_to_org_id serial primary key,
