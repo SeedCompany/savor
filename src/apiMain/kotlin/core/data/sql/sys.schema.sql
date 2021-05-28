@@ -182,32 +182,37 @@ CREATE OR REPLACE FUNCTION language_tfun_role_member_added()
   AS
 $$
 BEGIN
+-- if the role is a certain role, add the new member to the security table
 
 
 
-
-	IF NEW.last_name <> OLD.last_name THEN
-		 INSERT INTO employee_audits(employee_id,last_name,changed_on)
-		 VALUES(OLD.id,OLD.last_name,now());
-	END IF;
+--	IF NEW.last_name <> OLD.last_name THEN
+--		 INSERT INTO employee_audits(employee_id,last_name,changed_on)
+--		 VALUES(OLD.id,OLD.last_name,now());
+--	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER language_trigger_role_member_added
   AFTER UPDATE
   ON sys_role_memberships
   FOR EACH ROW
-  EXECUTE PROCEDURE language_role_member_added();
-
-
+  EXECUTE PROCEDURE language_tfun_role_member_added();
 
 create materialized view if not exists sys_locations_secure_view as
-    select *
-    from sys_locations_security
-    join sys_locations
-    on sys_locations_security.__sys_location_id = sys_locations.sys_location_id
+    select
+ 		__sys_person_id,
+ 		__sys_location_id,
+ 		case when _sys_location_id = 'Read' or _sys_location_id = 'Write' then sys_location_id end sys_location_id,
+ 		case when _created_at = 'Read' or _created_at = 'Write' then created_at end created_at,
+ 		case when _name = 'Read' or _name = 'Write' then name end "name",
+ 		case when _sensitivity = 'Read' or _sensitivity = 'Write' then sensitivity end sensitivity,
+ 		case when _type = 'Read' or _type = 'Write' then type end "type"
+  	from sys_locations_security
+  	join sys_locations
+  	on sys_locations_security.__sys_location_id = sys_locations.sys_location_id
 with no data;
 
 REFRESH MATERIALIZED VIEW sys_locations_secure_view;
