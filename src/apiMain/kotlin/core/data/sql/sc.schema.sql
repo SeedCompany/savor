@@ -11,6 +11,14 @@ create table if not exists sc_funding_account (
 	name varchar(32)
 );
 
+create table if not exists sc_funding_account_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	account_number varchar(32),
+	created_at timestamp,
+	name varchar(32)
+);
+
 -- LOCATION TABLES ----------------------------------------------------------
 
 create table if not exists sc_field_zone (
@@ -21,12 +29,30 @@ create table if not exists sc_field_zone (
 	foreign key (director_sys_person_id) references sys_people(sys_person_id)
 );
 
+create table if not exists sc_field_zone_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sc_field_zone_id int,
+	created_at timestamp,
+	director_sys_person_id int,
+	name varchar(32)
+);
+
 create table if not exists sc_field_regions (
 	sc_field_region_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	director_sys_person_id int,
 	name varchar(32) unique not null,
 	foreign key (director_sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sc_field_regions_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sc_field_region_id int,
+	created_at timestamp,
+	director_sys_person_id int,
+	name varchar(32)
 );
 
 create table if not exists sc_locations (
@@ -41,6 +67,18 @@ create table if not exists sc_locations (
 	foreign key (funding_account_number) references sc_funding_account(account_number)
 );
 
+create table if not exists sc_locations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_location_id int,
+	created_at timestamp,
+	default_sc_field_region_id int,
+	funding_account_number varchar(32),
+	iso_alpha_3 char(3),
+	name varchar(32),
+	type location_type
+);
+
 -- ORGANIZATION TABLES
 
 create table if not exists sc_organizations (
@@ -51,6 +89,15 @@ create table if not exists sc_organizations (
 	foreign key (sys_org_id) references sys_organizations(sys_org_id)
 );
 
+create table if not exists sc_organizations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_org_id int,
+	address varchar(255),
+	created_at timestamp,
+	sc_internal_org_id varchar(32)
+);
+
 create table if not exists sc_organization_locations(
 	sys_org_id int not null,
 	sys_location_id int not null,
@@ -58,6 +105,14 @@ create table if not exists sc_organization_locations(
 	primary key (sys_org_id, sys_location_id),
 	foreign key (sys_org_id) references sys_organizations(sys_org_id),
 	foreign key (sys_location_id) references sys_locations(sys_location_id)
+);
+
+create table if not exists sc_organization_locations_history(
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_org_id int,
+	sys_location_id int,
+	created_at timestamp
 );
 
 DO $$ BEGIN
@@ -95,11 +150,33 @@ create table if not exists sc_partners (
 	foreign key (sys_org_id) references sys_organizations(sys_org_id)
 );
 
+create table if not exists sc_partners_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_org_id int,
+	active bool,
+	created_at timestamp,
+	financial_reporting_types sc_financial_reporting_types[],
+	is_global_innovations_client bool,
+	modified_at timestamp,
+	pmc_entity_code varchar(32),
+	point_of_contact_sys_person_id int,
+	types sc_partner_types[]
+);
+
 -- LANGUAGE TABLES ----------------------------------------------------------
 
 create table if not exists sc_language_goal_definitions (
 	sc_goal_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP
+	-- todo
+);
+
+create table if not exists sc_language_goal_definitions_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sc_goal_id int,
+	created_at timestamp
 	-- todo
 );
 
@@ -120,6 +197,24 @@ create table if not exists sc_languages (
 	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
 );
 
+create table if not exists sc_languages_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sil_ethnologue_id int,
+	created_at timestamp,
+	is_dialect bool,
+	is_sign_language bool,
+	is_least_of_these bool,
+--	display_name varchar(255) unique not null,
+	least_of_these_reason varchar(255),
+	name varchar(255),
+	population_override int,
+	registry_of_dialects_code varchar(32),
+	sensitivity sensitivity,
+	sign_language_code varchar(32),
+	sponsor_estimated_eng_date timestamp
+);
+
 create table if not exists sc_language_locations (
 	sil_ethnologue_id int not null,
 	sys_location_id int not null,
@@ -129,12 +224,30 @@ create table if not exists sc_language_locations (
 	-- todo
 );
 
+create table if not exists sc_language_locations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sil_ethnologue_id int,
+	sys_location_id int,
+	created_at timestamp
+	-- todo
+);
+
 create table if not exists sc_language_goals (
     sil_ethnologue_id int not null,
 	sc_goal_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	primary key (sil_ethnologue_id, sc_goal_id),
 	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
+	-- todo
+);
+
+create table if not exists sc_language_goals_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sil_ethnologue_id int,
+	sc_goal_id int,
+	created_at timestamp
 	-- todo
 );
 
@@ -148,6 +261,14 @@ create table if not exists sc_known_languages_by_person (
 	foreign key (known_language_sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
 );
 
+create table if not exists sc_known_languages_by_person_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_person_id int,
+    known_language_sil_ethnologue_id int,
+	created_at timestamp
+);
+
 create table if not exists sc_people (
     sys_person_id int primary key,
     sc_internal_person_id varchar(32) unique,
@@ -155,6 +276,16 @@ create table if not exists sc_people (
 	skills varchar(32)[],
 	status varchar(32),
 	foreign key (sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sc_people_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_person_id int,
+    sc_internal_person_id varchar(32),
+	created_at timestamp,
+	skills varchar(32)[],
+	status varchar(32)
 );
 
 create table if not exists sc_person_unavailabilities (
@@ -166,8 +297,17 @@ create table if not exists sc_person_unavailabilities (
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
--- FILES & DIRECTORIES ----------------------------------------------------------
+create table if not exists sc_person_unavailabilities_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_person_id int,
+	created_at timestamp,
+	description text,
+	period_end timestamp,
+	period_start timestamp
+);
 
+-- FILES & DIRECTORIES ----------------------------------------------------------
 
 create table if not exists sc_directories (
     sc_directory_id serial primary key,
@@ -175,6 +315,16 @@ create table if not exists sc_directories (
     creator_sys_person_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+	-- todo
+);
+
+create table if not exists sc_directories_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_directory_id int,
+    name varchar(255),
+    creator_sys_person_id int,
+	created_at timestamp
 	-- todo
 );
 
@@ -186,6 +336,16 @@ create table if not exists sc_files (
 --  sc_directory_id int not null,
 --	foreign key (sc_directory_id) references sc_directories(sc_directory_id),
 	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sc_files_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_file_id int,
+	created_at timestamp,
+	creator_sys_person_id int,
+	name varchar(255)
+--  sc_directory_id int not null
 );
 
 create table if not exists sc_file_versions (
@@ -200,6 +360,20 @@ create table if not exists sc_file_versions (
     file_size int, -- bytes
 --    foreign key (sc_file_id) references sc_files(sc_file_id),
 	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sc_file_versions_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_file_version_id int,
+    category varchar(255),
+	created_at timestamp,
+    creator_sys_person_id int,
+--    mime_type mime_type,
+    name varchar(255),
+--    sc_file_id int,
+--    sc_file_url varchar(255),
+    file_size int -- bytes
 );
 
 -- PROJECT TABLES ----------------------------------------------------------
@@ -284,6 +458,31 @@ create table if not exists sc_projects (
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
 );
 
+create table if not exists sc_projects_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_project_id int,
+--	sc_change_to_plan_id int,
+	sc_internal_project_id varchar(32),
+	active bool,
+	created_at timestamp,
+	department_id varchar(32),
+	estimated_submission timestamp,
+	field_region_sys_location_id int,
+	initial_mou_end timestamp,
+	marketing_sys_location_id int,
+	modified_at timestamp,
+	mou_start timestamp,
+	mou_end timestamp,
+	name varchar(32),
+	owning_organization_sys_org_id int,
+	primary_sys_location_id int,
+	root_directory_sc_directory_id int,
+	status sc_project_status,
+	status_changed_at timestamp,
+	step sc_project_step
+);
+
 create table if not exists sc_partnerships (
     sys_project_id int not null,
     partner_sys_org_id int not null,
@@ -297,6 +496,17 @@ create table if not exists sc_partnerships (
 	foreign key (partner_sys_org_id) references sys_organizations(sys_org_id),
 	--	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
 	foreign key (agreement_sc_file_version_id) references sc_file_versions(sc_file_version_id)
+);
+
+create table if not exists sc_partnerships_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    partner_sys_org_id int,
+--    sc_change_to_plan_id int,
+    active bool,
+    agreement_sc_file_version_id int,
+	created_at timestamp
 );
 
 -- PROJECT BUDGETS
@@ -323,6 +533,17 @@ create table if not exists sc_budgets (
 	foreign key (universal_template_sys_file_id) references sc_file_versions(sc_file_version_id)
 );
 
+create table if not exists sc_budgets_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_budget_id int,
+    sys_project_id int,
+	created_at timestamp,
+    status sc_budget_status,
+    universal_template_sys_file_id int,
+    universal_template_file_url varchar(255)
+);
+
 create table if not exists sc_budget_records (
     sc_budget_id int not null,
 --    sc_change_to_plan_id int not null default 0,
@@ -335,6 +556,18 @@ create table if not exists sc_budget_records (
 --	sc_change_to_plan_id),
 	foreign key (sc_budget_id) references sc_budgets(sc_budget_id)
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+);
+
+create table if not exists sc_budget_records_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_budget_id int,
+--    sc_change_to_plan_id int not null default 0,
+    active bool,
+    amount decimal,
+    fiscal_year int,
+    partnership_sys_org_id int,
+	created_at timestamp
 );
 
 -- PROJECT LOCATION
@@ -352,6 +585,16 @@ create table if not exists sc_project_locations (
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
 );
 
+create table if not exists sc_project_locations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    sys_location_id int,
+--    sc_change_to_plan_id int,
+    active bool,
+	created_at timestamp
+);
+
 -- PROJECT MEMBERS
 
 create table if not exists sc_project_members (
@@ -364,6 +607,15 @@ create table if not exists sc_project_members (
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
+create table if not exists sc_project_members_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    sys_person_id int,
+	created_at timestamp,
+	modified_at timestamp
+);
+
 create table if not exists sc_project_member_roles (
     sys_project_id int not null,
     sys_person_id int not null,
@@ -374,6 +626,16 @@ create table if not exists sc_project_member_roles (
 	foreign key (sys_project_id) references sys_projects(sys_project_id),
 	foreign key (sys_person_id) references sys_people(sys_person_id),
 	foreign key (role_sys_org_id) references sys_organizations(sys_org_id)
+);
+
+create table if not exists sc_project_member_roles_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    sys_person_id int,
+	created_at timestamp,
+	modified_at timestamp,
+	role_sys_org_id int
 );
 
 -- LANGUAGE ENGAGEMENTS
@@ -430,6 +692,35 @@ create table if not exists sc_language_engagements (
 	foreign key (sys_project_id) references sys_projects(sys_project_id),
 	foreign key (pnp_sc_file_version_id) references sc_file_versions(sc_file_version_id)
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+);
+
+create table if not exists sc_language_engagements_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_project_id int,
+	sil_ethnologue_id int,
+--	sc_change_to_plan_id int,
+    active bool,
+	created_at timestamp,
+	communications_complete_date timestamp,
+	complete_date timestamp,
+	disbursement_complete_date timestamp,
+	end_date timestamp,
+	end_date_override timestamp,
+	initial_end_date timestamp,
+	is_first_scripture bool,
+	is_luke_partnership bool,
+	is_sent_printing bool,
+	last_reactivated_at timestamp,
+	paratext_registry_id varchar(32),
+	pnp varchar(255),
+	pnp_sc_file_version_id int,
+	product_engagement_tag sc_project_engagement_tag,
+	start_date timestamp,
+	start_date_override timestamp,
+	status sc_engagement_status,
+	updated_at timestamp
+--	sc_change_to_plan_id)
 );
 
 -- PRODUCTS
@@ -493,6 +784,20 @@ create table if not exists sc_products (
     primary key (sc_product_id)
 --    sc_change_to_plan_id)
 --    foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+);
+
+create table if not exists sc_products_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_product_id int,
+--    sc_change_to_plan_id int,
+    active bool,
+    created_at timestamp,
+    mediums sc_product_mediums[],
+    methodologies sc_product_methodologies[],
+    purposes sc_product_purposes[],
+    type sc_product_type,
+    name varchar(64)
 );
 
 create table if not exists sc_product_scripture_references (
@@ -567,6 +872,34 @@ create table if not exists sc_internship_engagements (
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
 );
 
+create table if not exists sc_internship_engagements_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	project_sys_org_id int,
+	sil_ethnologue_id int,
+--	sc_change_to_plan_id int,
+    active bool,
+	created_at timestamp,
+	communications_complete_date timestamp,
+	complete_date timestamp,
+	country_of_origin_sys_location_id int,
+	disbursement_complete_date timestamp,
+	end_date timestamp,
+	end_date_override timestamp,
+	growth_plan_sc_file_version_id int,
+	initial_end_date timestamp,
+	intern_sys_person_id int,
+	last_reactivated_at timestamp,
+	mentor_sys_person_id int,
+	methodology sc_internship_methodology,
+	paratext_registry_id varchar(32),
+	position sc_internship_position,
+	start_date timestamp,
+	start_date_override timestamp,
+	status sc_engagement_status,
+	updated_at timestamp
+);
+
 create table if not exists sc_ceremonies (
     sc_ceremony_id serial primary key,
     project_sys_org_id int not null,
@@ -580,11 +913,20 @@ create table if not exists sc_ceremonies (
     foreign key (project_sys_org_id) references sys_organizations(sys_org_id)
 );
 
-
-
+create table if not exists sc_ceremonies_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sc_ceremony_id int,
+    project_sys_org_id int,
+	sil_ethnologue_id int,
+	actual_date timestamp,
+	created_at timestamp,
+	estimated_date timestamp,
+	is_planned bool,
+	type varchar(255)
+);
 
 -- CRM TABLES, WIP ------------------------------------------------------------------
-
 
 DO $$ BEGIN
     create type sc_involvements as enum (

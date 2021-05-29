@@ -44,6 +44,15 @@ create table if not exists sys_roles (
 	unique (sys_org_id, name)
 );
 
+create table if not exists sys_roles_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_role_id int,
+	sys_org_id int,
+	created_at timestamp,
+	name varchar(255)
+);
+
 DO $$ BEGIN
     create type table_name as enum (
 		'sys_scripture_references',
@@ -110,11 +119,29 @@ create table if not exists sys_role_grants (
 	foreign key (sys_role_id) references sys_roles(sys_role_id)
 );
 
+create table if not exists sys_role_grants_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_role_id int,
+	created_at timestamp,
+	table_name table_name,
+	column_name varchar(32),
+	access_level access_level
+);
+
 create table if not exists sys_role_memberships (
 	sys_person_id int,
 	sys_role_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	foreign key (sys_role_id) references sys_roles(sys_role_id)
+);
+
+create table if not exists sys_role_memberships_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_person_id int,
+	sys_role_id int,
+	created_at timestamp
 );
 
 -- SCRIPTURE REFERENCE -----------------------------------------------------------------
@@ -175,43 +202,32 @@ create table if not exists sys_locations_security (
 	foreign key (__sys_location_id) references sys_locations(sys_location_id)
 );
 
--- todo add entry to security table when certain roles have members added
-CREATE OR REPLACE FUNCTION language_tfun_role_member_added()
+create table if not exists sys_locations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_location_id int,
+	created_at timestamp,
+	name varchar(255),
+	sensitivity sensitivity,
+	type location_type
+);
+
+CREATE OR REPLACE FUNCTION locations_history_fn()
   RETURNS TRIGGER
   LANGUAGE PLPGSQL
-  AS
-$$
-declare
-    grantRow sys_role_grants%ROWTYPE;
-BEGIN
--- if the role is a certain role, add the new member to the security table
+  AS $$
 begin
-    for grantRow in
-         select column_name
-         from sys_role_grants
-         into vColumnName
-         where table_name = 'sys_locations'
-    loop
-	    -- loop through the grants and ensure the user is added to all rows
-	    -- in the language table with the columns
-    end loop;
-end;
-
---	IF NEW.last_name <> OLD.last_name THEN
---		 INSERT INTO employee_audits(employee_id,last_name,changed_on)
---		 VALUES(OLD.id,OLD.last_name,now());
---	END IF;
-
+    insert into sys_locations_history("sys_location_id", "created_at", "name", "sensitivity", "type")
+    values (new.sys_location_id, new.created_at, new.name, new.sensitivity, new.type);
 	RETURN NEW;
-END;
-$$;
+end; $$;
 
-DROP TRIGGER IF EXISTS language_trigger_role_member_added ON public.sys_role_memberships;
-CREATE TRIGGER language_trigger_role_member_added
+DROP TRIGGER IF EXISTS locations_history_trigger ON public.sys_locations;
+CREATE TRIGGER locations_history_trigger
   AFTER UPDATE
-  ON sys_role_memberships
+  ON sys_locations
   FOR EACH ROW
-  EXECUTE PROCEDURE language_tfun_role_member_added();
+  EXECUTE PROCEDURE locations_history_fn();
 
 create materialized view if not exists sys_locations_secure_view as
     select
@@ -244,10 +260,27 @@ CREATE TABLE if not exists sil_language_codes (
    name varchar(75) not null   -- Primary name in that country
 );
 
+CREATE TABLE if not exists sil_language_codes_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+   lang_id char(3),
+   country_id char(2),
+   lang_status char(1),
+   name varchar(75)
+);
+
 CREATE TABLE if not exists sil_country_codes (
    country_id char(2) not null,  -- Two-letter code from ISO3166
    name varchar(75) not null,  -- Country name
    area varchar(10) not null -- World area
+);
+
+CREATE TABLE if not exists sil_country_codes_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+   country_id char(2),
+   name varchar(75),
+   area varchar(10)
 );
 
 CREATE TABLE if not exists sil_language_index (
@@ -256,7 +289,16 @@ CREATE TABLE if not exists sil_language_index (
    name_type char(2) not null,  -- L(anguage), LA(lternate),
                                 -- D(ialect), DA(lternate)
                                 -- LP,DP (a pejorative alternate)
-   name  varchar(75) not null   -- The name
+   name  varchar(75) not null
+);
+
+CREATE TABLE if not exists sil_language_index_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+   lang_id char(3),
+   country_id char(2),
+   name_type char(2),
+   name  varchar(75)
 );
 
 create table if not exists sil_table_of_languages (
@@ -266,6 +308,19 @@ create table if not exists sil_table_of_languages (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	code varchar(32),
 	language_name varchar(50) not null,
+	population int,
+	provisional_code varchar(32)
+);
+
+create table if not exists sil_table_of_languages_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sil_ethnologue_id int,
+    sil_ethnologue_legacy_id varchar(32),
+	iso_639 char(3),
+	created_at timestamp,
+	code varchar(32),
+	language_name varchar(50),
 	population int,
 	provisional_code varchar(32)
 );
@@ -292,20 +347,9 @@ create table if not exists sys_people (
     foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
 
--- fkey for sys_role_memberships
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_memberships_person_id_fkey') THEN
-        ALTER TABLE sys_role_memberships
-            ADD CONSTRAINT sys_role_memberships_person_id_fkey
-            foreign key (sys_person_id) references sys_people(sys_person_id);
-    END IF;
-END;
-$$;
-
 create table if not exists sys_people_history (
-    sys_people_history_id serial primary key,
-    sys_people_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
     sys_person_id int,
     about text,
     created_at timestamp,
@@ -322,6 +366,17 @@ create table if not exists sys_people_history (
     time_zone varchar(32),
     title varchar(255)
 );
+
+-- fkey for sys_role_memberships
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_memberships_person_id_fkey') THEN
+        ALTER TABLE sys_role_memberships
+            ADD CONSTRAINT sys_role_memberships_person_id_fkey
+            foreign key (sys_person_id) references sys_people(sys_person_id);
+    END IF;
+END;
+$$;
 
 create table if not exists sys_people_security (
     _sys_person_id int,
@@ -353,6 +408,16 @@ create table if not exists sys_education_entries (
     major varchar(64)
 );
 
+create table if not exists sys_education_entries_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_education_id int,
+	created_at timestamp,
+    degree varchar(64),
+    institution varchar(64),
+    major varchar(64)
+);
+
 create table if not exists sys_education_by_person (
     sys_person_id int not null,
     sys_education_id int not null,
@@ -360,6 +425,15 @@ create table if not exists sys_education_by_person (
     graduation_year int,
 	foreign key (sys_person_id) references sys_people(sys_person_id),
 	foreign key (sys_education_id) references sys_education_entries(sys_education_id)
+);
+
+create table if not exists sys_education_by_person_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_person_id int,
+    sys_education_id int,
+	created_at timestamp,
+    graduation_year int
 );
 
 -- ORGANIZATIONS ------------------------------------------------------------
@@ -394,6 +468,15 @@ BEGIN
 END;
 $$;
 
+create table if not exists sys_organizations_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_org_id int,
+	created_at timestamp,
+	name varchar(255),
+	primary_sys_location_id int
+);
+
 DO $$ BEGIN
     create type person_to_org_relationship_type as enum (
           'Vendor',
@@ -421,6 +504,15 @@ create table if not exists sys_people_to_org_relationships (
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
 
+create table if not exists sys_people_to_org_relationships_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_people_to_org_id int,
+	sys_org_id int,
+	sys_person_id int,
+	created_at timestamp
+);
+
 create table if not exists sys_people_to_org_relationship_type (
     sys_people_to_org_id int,
     begin_at timestamp not null,
@@ -430,6 +522,15 @@ create table if not exists sys_people_to_org_relationship_type (
 	foreign key (sys_people_to_org_id) references sys_people_to_org_relationships(sys_people_to_org_id)
 );
 
+create table if not exists sys_people_to_org_relationship_type_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_people_to_org_id int,
+    begin_at timestamp,
+	created_at timestamp,
+	end_at timestamp,
+	relationship_type person_to_org_relationship_type
+);
 
 -- USERS ---------------------------------------------------------------------
 
@@ -453,6 +554,16 @@ BEGIN
 END;
 $$;
 
+create table if not exists sys_users_history(
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_person_id int,
+	owning_sys_org_id int,
+	email varchar(255),
+	password varchar(255),
+	created_at timestamp
+);
+
 -- PROJECTS ------------------------------------------------------------------
 
 create table if not exists sys_projects (
@@ -466,6 +577,16 @@ create table if not exists sys_projects (
 	foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
 
+create table if not exists sys_projects_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_project_id int,
+	created_at timestamp,
+	name varchar(32),
+	primary_sys_org_id int,
+	primary_sys_location_id int
+);
+
 -- AUTHENTICATION ------------------------------------------------------------
 
 create table if not exists sys_tokens (
@@ -474,74 +595,3 @@ create table if not exists sys_tokens (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	foreign key (sys_person_id) references sys_people(sys_person_id)
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- VIEWS ----------------------------------------------------------------------
-
--- temp, doesn't use group security. need to research the best way to produce view
---create materialized view if not exists sys_column_security
---as
---    select sys_person_id, table_name, column_name
---    from sys_column_access_by_person
---with no data;
---
---create unique index if not exists pk_sys_column_security on sys_column_security ("sys_person_id", "table_name", "column_name");
---
---REFRESH MATERIALIZED VIEW sys_column_security;
---
---create materialized view if not exists sys_row_security
---    as
---    select sys_people.sys_person_id, sys_row_access_by_person.table_name, sys_row_access_by_person.row_id
---    from sys_people
---    left join sys_row_access_by_person
---    on sys_people.sys_person_id = sys_row_access_by_person.sys_person_id
---    where sys_row_access_by_person.row_id is not null
---with no data;
---
---create unique index if not exists pk_sys_row_security on sys_row_security ("sys_person_id", "table_name", "row_id");
---
---REFRESH MATERIALIZED VIEW sys_row_security;
-
-
--- SECURE TABLES ------------------------------------------------------------------------
-
-
-
---create or replace function x_read_sc_people(
---    in pSysPersonId varchar(255)
---)
---returns table(
---    _sys_person_id int,
---	_sc_internal_person_id varchar(32),
---    _public_first_name varchar(32)
---)
---language plpgsql
---as $$
---declare
---    vRecord record;
---begin
---    for vRecord in(
---        select sys_people.sys_person_id, sys_people.public_first_name
---        from sys_people
---    ) loop
---        _sys_person_id := vRecord.sys_person_id;
---        _public_first_name := vRecord.public_first_name;
---		_sc_internal_person_id := 42;
---        return next;
---    end loop;
---end; $$;
