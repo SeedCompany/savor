@@ -15,9 +15,11 @@ class MigratePlanChanges(val config: Config, val neo4j: Neo4j, val connection: C
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
+            vPlanChangeId INT;
         begin
-            SELECT scp.summary
+            SELECT scp.sc_change_to_plan_id
             FROM sc_change_to_plans AS scp
+            INTO vPlanChangeId
             WHERE scp.summary = mockSummary;
             IF NOT found THEN
                 INSERT INTO sc_change_to_plans("summary")
@@ -25,6 +27,7 @@ class MigratePlanChanges(val config: Config, val neo4j: Neo4j, val connection: C
                 vResponseCode := 0;
             ELSE 
                 vResponseCode := 1;
+            END IF;
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()
