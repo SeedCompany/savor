@@ -48,7 +48,8 @@ drop type if exists sc_change_to_plan_status cascade;
 -- FUNCTIONS ---------------------------------------------------------------------------
 
 -- Triggers
-DROP TRIGGER IF EXISTS locations_history_trigger ON public.sys_locations cascade;
+DROP TRIGGER IF EXISTS locations_history_insert_trigger ON public.sys_locations cascade;
+DROP TRIGGER IF EXISTS locations_history_update_trigger ON public.sys_locations cascade;
 drop function if exists locations_history_fn cascade;
 
 -- Migration
