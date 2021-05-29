@@ -1,8 +1,8 @@
 -- bootstrap.data.sql
 
 -- SYS LOCATIONS
-insert into sys_locations("name", "sensitivity", "type") values ('USA', 'Low', 'Country');
-insert into sys_locations("name", "sensitivity", "type") values ('Arlington', 'High', 'City');
+insert into sys_locations("name", "sensitivity", "type") values ('USA', 'Low', 'Country') on conflict do nothing;
+insert into sys_locations("name", "sensitivity", "type") values ('Arlington', 'High', 'City') on conflict do nothing;
 
 -- SYS ORGANIZATIONS
 insert into sys_organizations ("name") values ('Seed Company') on conflict do nothing;

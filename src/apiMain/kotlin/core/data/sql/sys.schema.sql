@@ -222,8 +222,15 @@ begin
 	RETURN NEW;
 end; $$;
 
-DROP TRIGGER IF EXISTS locations_history_trigger ON public.sys_locations;
-CREATE TRIGGER locations_history_trigger
+DROP TRIGGER IF EXISTS locations_history_insert_trigger ON public.sys_locations;
+CREATE TRIGGER locations_history_insert_trigger
+  AFTER INSERT
+  ON sys_locations
+  FOR EACH ROW
+  EXECUTE PROCEDURE locations_history_fn();
+
+DROP TRIGGER IF EXISTS locations_history_update_trigger ON public.sys_locations;
+CREATE TRIGGER locations_history_update_trigger
   AFTER UPDATE
   ON sys_locations
   FOR EACH ROW

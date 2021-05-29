@@ -47,16 +47,20 @@ drop type if exists sc_change_to_plan_status cascade;
 
 -- FUNCTIONS ---------------------------------------------------------------------------
 
+-- Triggers
+DROP TRIGGER IF EXISTS locations_history_trigger ON public.sys_locations cascade;
+drop function if exists locations_history_fn cascade;
+
 -- Migration
-drop function if exists migrate_org_proc cascade;
-drop function if exists migrate_user_proc cascade;
+drop function if exists migrate_org cascade;
+drop function if exists migrate_user cascade;
 drop function if exists create_sc_role cascade;
-drop function if exists add_user_role_proc cascade;
+drop function if exists add_user_role cascade;
 
 -- Authentication
 drop function if exists sc_add_user cascade;
-drop function if exists sys_login_proc cascade;
-drop function if exists sys_register_proc cascade;
+drop function if exists sys_login cascade;
+drop function if exists sys_register cascade;
 
 -- Organization
 drop function if exists sc_add_org cascade;
