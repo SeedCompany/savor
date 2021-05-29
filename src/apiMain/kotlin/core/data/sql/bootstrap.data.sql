@@ -31,3 +31,4 @@ select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'crea
 select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'sensitivity', 'Read');
 
 -- ROLE MEMBERSHIPS
+select * from sys_add_role_member('Admin', 'Seed Company', 'michael_marshall@tsco.org');

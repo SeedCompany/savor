@@ -95,6 +95,7 @@ declare
     vResponseCode INT;
     vSysRoleId INT;
     vOrgId INT;
+    vSysPersonId INT;
 begin
     SELECT sys_org_id
     FROM sys_organizations
@@ -106,10 +107,18 @@ begin
         INTO vSysRoleId
         WHERE sys_roles.sys_org_id = vOrgId
             AND sys_roles.name = pRoleName;
-        IF NOT FOUND THEN
-            INSERT INTO sys_roles("sys_org_id", "name")
-            VALUES (vOrgId, pRoleName);
-            vResponseCode := 0;
+        IF FOUND THEN
+            select sys_person_id
+            from sys_users
+            into vSysPersonId
+            where sys_users.email = pUserEmail;
+            if found then
+                INSERT INTO sys_role_memberships("sys_person_id", "sys_role_id")
+                VALUES (vSysPersonId, vSysRoleId);
+                vResponseCode := 0;
+            else
+                vResponseCode := 1;
+            end if;
         ELSE
             vResponseCode := 1;
         END IF;
