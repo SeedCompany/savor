@@ -255,6 +255,9 @@ REFRESH MATERIALIZED VIEW sys_locations_secure_view;
 CREATE UNIQUE INDEX IF NOT EXISTS sys_locations_secure_view_uniq
     ON sys_locations_secure_view (__sys_person_id, __sys_location_id);
 
+CREATE INDEX IF NOT EXISTS sys_locations_secure_view_lookup
+    ON sys_locations_secure_view (__sys_person_id);
+
 -- LANGUAGE -----------------------------------------------------------------
 
 -- sil tables are copied from SIL schema docs

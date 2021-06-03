@@ -52,7 +52,7 @@ kotlin {
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-                runtimeOnly("org.postgresql:postgresql")
+                runtimeOnly("org.postgresql:postgresql:42.2.20")
             }
         }
         val apiTest by getting {
