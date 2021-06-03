@@ -1,4 +1,4 @@
-package org.seedcompany.api.core
+package org.seedcompany.savor.core
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
