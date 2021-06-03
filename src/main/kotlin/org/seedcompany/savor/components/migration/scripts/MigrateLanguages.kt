@@ -1,12 +1,13 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
+import org.seedcompany.savor.core.Postgres
 import java.sql.Connection
 
-class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
+class MigrateLanguages(val config: Postgres, val neo4j: Neo4j, val connection: Connection)  {
     val migrateLanguagesProc = """
         create or replace function migrate_languages_proc(
-            in pEthName varchar(50),
+            in pEthId varchar(50),
             in pLangName varchar(255)
         )
         returns INT
@@ -19,7 +20,7 @@ class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
             SELECT sys_ethnologue_id 
             FROM sil_table_of_languages
             INTO vEthId
-            WHERE sil_table_of_languages.language_name = pEthName;
+            WHERE sil_table_of_languages.sys_ethnologue_legacy_id = pEthId;
             IF found THEN
                 INSERT INTO sc_languages("sys_ethnologue_id","name")
                 VALUES (vEthId, pLangName)
@@ -28,7 +29,6 @@ class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
                 vResponseCode := 0;
             ELSE
                 vResponseCode := 2;
-            END IF;
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()
@@ -83,12 +83,12 @@ class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
                             type(r) as propName, 
                             prop.value as propValue, 
                             prop.createdAt as createdAt,
-                            ethName.value as ethNameValue
+                            eth.id as ethIdValue
                     """.trimIndent()
                 )
 
                 // var langId: String? = null
-                var ethName: String? = null
+                var ethId: String? = null
                 var langName: String? = null
 
                 while (getUserResult.hasNext()) {
@@ -96,11 +96,11 @@ class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
 
                     // langId = record.get("langId").asString()
                     val propName = record.get("propName").asString()
-                    ethName = record.get("ethNameValue").asString()
+                    ethId = record.get("ethIdValue").asString()
                     when (propName) {
-//                        "ethNameValue" -> {
+//                        "ethIdValue" -> {
 //                            if (!record.get("propValue").isNull){
-//                                ethName = record.get("propValue").asString()
+//                                ethId = record.get("propValue").asString()
 //                            }
 //                        }
                         "name" -> {
@@ -118,7 +118,7 @@ class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
                 it.close()
 
                 // write to postgres
-                createLanguageSQL.setString(1, ethName)
+                createLanguageSQL.setString(1, ethId)
                 createLanguageSQL.setString(2, langName)
 //
 //                if (langName != null) {

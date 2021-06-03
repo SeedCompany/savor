@@ -1,11 +1,11 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
-import org.seedcompany.savor.core.PostgresConfig
+import org.seedcompany.savor.core.Postgres
 import java.sql.Connection
 import java.sql.Types
 
-class MigratePlanChanges(val config: PostgresConfig, val neo4j: Neo4j, val connection: Connection) {
+class MigratePlanChanges(val config: Postgres, val neo4j: Neo4j, val connection: Connection) {
     val migratePlanChangeProc = """
         create or replace function migrate_plan_change_proc(
             in mockSummary text
@@ -15,9 +15,11 @@ class MigratePlanChanges(val config: PostgresConfig, val neo4j: Neo4j, val conne
         as ${'$'}${'$'}
         declare
             vResponseCode INT;
+            vPlanChangeId INT;
         begin
-            SELECT scp.summary
+            SELECT scp.sc_change_to_plan_id
             FROM sc_change_to_plans AS scp
+            INTO vPlanChangeId
             WHERE scp.summary = mockSummary;
             IF NOT found THEN
                 INSERT INTO sc_change_to_plans("summary")
@@ -25,6 +27,7 @@ class MigratePlanChanges(val config: PostgresConfig, val neo4j: Neo4j, val conne
                 vResponseCode := 0;
             ELSE 
                 vResponseCode := 1;
+            END IF;
             return vResponseCode;
         end; ${'$'}${'$'}
     """.trimIndent()

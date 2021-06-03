@@ -95,7 +95,7 @@ class MigratePartners(val neo4j: Neo4j, val connection: Connection) {
                     groupName = record.get("groupName").asString()
                     when(propName){
                         "globalInnovationsClient"->{
-                            globalInnovationsClient = record.get("propValue").asBoolean()
+//                            globalInnovationsClient = record.get("propValue").asBoolean()
                         }
                         "pmcEntityCode" ->{
                             pmcEntityCode = record.get("propValue").asString()
