@@ -1,18 +1,20 @@
 package org.seedcompany.savor.components.migration
 
-import org.neo4j.driver.Driver
-import org.springframework.beans.factory.annotation.Autowired
+import org.seedcompany.savor.core.Neo4j
+import org.seedcompany.savor.core.PostgresConfig
 import java.sql.Connection
 import java.sql.Types
-import org.springframework.stereotype.Component
 
-@Component
+
+import java.time.ZonedDateTime
+
+
 class Migration (
-    @Autowired
-    val neo4j: Driver,
-    @Autowired
-    val postgres: Connection,
+    val config: PostgresConfig,
+    val neo4j: Neo4j,
+    val connection: Connection,
 ) {
+
 
     fun migrate() {
 //        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
@@ -28,8 +30,11 @@ class Migration (
 //        MigrateLocations(config, neo4j,connection).migrateLocations()
 //        MigrateFiles(config, neo4j,connection).migrateFiles()
 //        MigrateFileVersions(config, neo4j,connection).migrateFileVersions()
-//        this.migrateProjects() - unique primary key constraint (need change to plan)
+//        MigratePlanChanges(config,neo4j, connection).migratePlanChange()
+//        MigrateProjects(config, neo4j, connection).migrateProjects()
+
     }
+
 
     val migrateProjectsProc =  """
         create or replace function migrate_projects_proc(
@@ -61,20 +66,20 @@ class Migration (
     """.trimIndent()
 
     init {
-        val statement = this.postgres.createStatement()
+        val statement = this.connection.createStatement()
         statement.execute(this.migrateProjectsProc)
         statement.close()
     }
 
     private fun migrateProjects() {
-        val createProjectSQL = this.postgres.prepareStatement(
+        val createProjectSQL = this.connection.prepareStatement(
             """
             select migrate_projects_proc from migrate_projects_proc(?,?,?,?);
         """.trimIndent()
         )
         var count = 0
 
-        neo4j.session().readTransaction {
+        neo4j.driver.session().readTransaction {
             print("\nProject")
             val result = it.run(
                 "match (n:Project) return count(n) as count"
@@ -89,7 +94,7 @@ class Migration (
             result.consume()
         }
         for (i in 0 until count) {
-            neo4j.session().readTransaction {
+            neo4j.driver.session().readTransaction {
                 print("\n${i + 1} ")
                 val getUserResult = it.run(
                     """

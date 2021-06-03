@@ -400,13 +400,13 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
---create table if not exists sc_change_to_plans (
---    sc_change_to_plan_id serial primary key,
---    type sc_change_to_plan_type,
---    summary text,
---    status sc_change_to_plan_status,
---	created_at timestamp not null default CURRENT_TIMESTAMP
---);
+create table if not exists sc_change_to_plans (
+    sc_change_to_plan_id serial primary key,
+    type sc_change_to_plan_type,
+    summary text,
+    status sc_change_to_plan_status,
+	created_at timestamp not null default CURRENT_TIMESTAMP
+);
 
 -- todo
 DO $$ BEGIN
@@ -431,12 +431,12 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc_projects (
-	sys_project_id int not null,
---	sc_change_to_plan_id int not null default 0,
-	sc_internal_project_id varchar(32) not null,
+	project_sys_group_id int not null,
+	sc_change_to_plan_id int not null default 0,
+	sc_internal_project_id varchar(255) not null,
 	active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	department_id varchar(32),
+	department_id varchar(255),
 	estimated_submission timestamp,
 	field_region_sys_location_id int,
 	initial_mou_end timestamp,
@@ -444,15 +444,16 @@ create table if not exists sc_projects (
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	mou_start timestamp,
 	mou_end timestamp,
-	name varchar(32) unique not null,
-	owning_organization_sys_org_id int,
+	name varchar(255) unique not null,
+	owning_organization_sys_group_id int,
 	primary_sys_location_id int,
 	root_directory_sc_directory_id int,
-	status sc_project_status,
+	status sc_enum_project_status,
 	status_changed_at timestamp,
-	step sc_project_step,
---	primary key (project_sys_org_id, sc_change_to_plan_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
+	step sc_enum_project_step,
+	primary key (project_sys_group_id, sc_change_to_plan_id),
+--    primary key (project_sys_group_id),
+	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (root_directory_sc_directory_id) references sc_directories(sc_directory_id),
 	foreign key (field_region_sys_location_id) references sys_locations(sys_location_id)
 --	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)

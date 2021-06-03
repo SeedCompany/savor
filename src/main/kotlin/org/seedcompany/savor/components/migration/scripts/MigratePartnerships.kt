@@ -1,12 +1,14 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
+import org.seedcompany.savor.core.PostgresConfig
 import java.sql.Connection
 
-class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
+class MigratePartnerships(val config: PostgresConfig, val neo4j: Neo4j, val connection: Connection) {
     val migratePartnershipsProc = """
         create or replace function migrate_partnerships_proc(
-           in orgName varchar(255)
+           in orgName varchar(255),
+           in projectId varchar(255)
         )
         returns INT
         language plpgsql
@@ -14,15 +16,24 @@ class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
         declare
             vResponseCode INT;
             vGroupId INT;
+            vProjectId INT;
         begin
             SELECT sg.sys_group_id
             FROM sys_groups AS sg
             INTO vGroupId
             WHERE sg.name = orgName;
             IF found THEN
-                INSERT INTO sc_partnerships("project_sys_group_id", "partner_sys_group_id")
-                VALUES (vGroupId, vGroupId);
-                vResponseCode := 0;
+                SELECT sp.project_sys_group_id 
+                FROM sc_projects AS sp 
+                INTO vProjectId 
+                WHERE sp.sc_internal_project_id = projectId;
+                IF found THEN
+                    INSERT INTO sc_partnerships("project_sys_group_id", "partner_sys_group_id")
+                    VALUES (vProjectId, vGroupId); 
+                    vResponseCode := 0;
+                ELSE 
+                    vResponseCode := 2;
+                END IF;
             ELSE
                 vResponseCode := 2;
             END IF;
@@ -39,7 +50,7 @@ class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
     public fun migratePartnerships() {
         val createFileSQL = this.connection.prepareStatement(
             """
-            select migrate_partnerships_proc from migrate_partnerships_proc(?);
+            select migrate_partnerships_proc from migrate_partnerships_proc(?,?);
         """.trimIndent()
         )
         var count = 0
@@ -87,6 +98,7 @@ class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
                 while (getUserResult.hasNext()) {
                     val record = getUserResult.next()
                     orgName = record.get("orgName").asString()
+                    projectId = record.get("projectId").asString()
                 }
                 it.commit()
                 it.close()
@@ -94,6 +106,7 @@ class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {
                 print("\n $orgName \n")
 
                 createFileSQL.setString(1, orgName)
+                createFileSQL.setString(2, projectId)
 
 
                 val createResult = createFileSQL.executeQuery()
