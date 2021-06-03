@@ -1,10 +1,9 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
-import org.seedcompany.savor.core.Postgres
 import java.sql.Connection
 
-class MigrateLanguages(val config: Postgres, val neo4j: Neo4j, val connection: Connection)  {
+class MigrateLanguages(val neo4j: Neo4j, val connection: Connection)  {
     val migrateLanguagesProc = """
         create or replace function migrate_languages_proc(
             in pEthId varchar(50),

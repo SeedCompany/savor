@@ -1,10 +1,9 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
-import org.seedcompany.savor.core.PostgresConfig
 import java.sql.Connection
 
-class MigrateBudgetRecords(val config: PostgresConfig, val neo4j: Neo4j, val connection: Connection) {
+class MigrateBudgetRecords(val neo4j: Neo4j, val connection: Connection) {
     val migrateBudgetRecordsProc =  """
         create or replace function migrate_budget_records_proc(
            in projectId varchar(255)

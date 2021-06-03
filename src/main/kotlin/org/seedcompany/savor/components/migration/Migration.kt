@@ -3,20 +3,24 @@ package org.seedcompany.savor.components.migration
 import org.seedcompany.savor.components.migration.scripts.MigrateBudgetRecords
 import org.seedcompany.savor.core.Neo4j
 import org.seedcompany.savor.core.Postgres
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Component
 import java.sql.Connection
 import java.sql.Types
 
 
 import java.time.ZonedDateTime
 
-
+@Component
 class Migration (
     val config: Postgres,
     val neo4j: Neo4j,
     val connection: Connection,
 ) {
 
+    @Bean
     fun migrate() {
+        println("migrating...")
 //        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
 //        MigrateUsers(config, neo4j,connection).migrateUsers()
 //        MigrateRoles(config, neo4j,connection).migrateRoles()

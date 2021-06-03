@@ -1,11 +1,9 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
-import org.seedcompany.savor.core.Postgres
 import java.sql.Connection
-import java.sql.Types
 
-class MigratePlanChanges(val config: Postgres, val neo4j: Neo4j, val connection: Connection) {
+class MigratePlanChanges(val neo4j: Neo4j, val connection: Connection) {
     val migratePlanChangeProc = """
         create or replace function migrate_plan_change_proc(
             in mockSummary text

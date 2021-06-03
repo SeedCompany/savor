@@ -1,10 +1,9 @@
 package org.seedcompany.savor.components.migration.scripts
 
 import org.seedcompany.savor.core.Neo4j
-import org.seedcompany.savor.core.Postgres
 import java.sql.Connection
 
-class MigrateProjectMembers(val config: Postgres, val neo4j: Neo4j, val connection: Connection) {
+class MigrateProjectMembers(val neo4j: Neo4j, val connection: Connection) {
     val migrateProjectMembersProc = """
         create or replace function migrate_project_members_proc(
            in userPhone varchar(255),

@@ -11,7 +11,6 @@ class MigrationController(
 ) {
     @GetMapping("/migrate")
     fun migrate (){
-        println("asdf")
         migration.migrate()
     }
 }
