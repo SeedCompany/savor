@@ -1,6 +1,6 @@
-package components.migration.scripts
+package org.seedcompany.savor.components.migration.scripts
 
-import org.seedcompany.api.core.Neo4j
+import org.seedcompany.savor.core.Neo4j
 import java.sql.Connection
 
 class MigratePartnerships(val neo4j: Neo4j, val connection: Connection) {

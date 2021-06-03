@@ -1,4 +1,4 @@
-package org.seedcompany.api.components.migration
+package org.seedcompany.savor.components.migration
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping

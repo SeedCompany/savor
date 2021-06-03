@@ -1,5 +1,6 @@
-package org.seedcompany.api.core
+package org.seedcompany.savor.core
 
+import org.seedcompany.api.core.PostgresConfig
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component

@@ -1,4 +1,4 @@
-package org.seedcompany.api.components.migration
+package org.seedcompany.savor.components.migration
 
 import org.neo4j.driver.Driver
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,7 +1,7 @@
-package components.migration.scripts
+package org.seedcompany.savor.components.migration.scripts
 
+import org.seedcompany.savor.core.Neo4j
 import java.time.ZonedDateTime
-import org.seedcompany.api.core.Neo4j
 import java.sql.Connection
 
 class MigrateOrgs(val neo4j: Neo4j, val connection: Connection) {

@@ -1,4 +1,4 @@
-package org.seedcompany.api.components.authorization
+package org.seedcompany.savor.components.authorization
 
 import java.sql.Connection
 
