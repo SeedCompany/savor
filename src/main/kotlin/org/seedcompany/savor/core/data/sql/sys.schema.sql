@@ -2,6 +2,8 @@
 
 -- ENUMS ----
 
+set schema 'public';
+
 DO $$ BEGIN
     create type access_level as enum (
           'Read',
