@@ -100,3 +100,9 @@ end; $$;
 			-- else, no change
 -- else exit
 
+
+
+
+-- for each non_nullable_column
+-- loop over the entire table and add it to an array
+-- for each 
