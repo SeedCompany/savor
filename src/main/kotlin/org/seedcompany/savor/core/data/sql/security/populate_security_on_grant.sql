@@ -106,3 +106,126 @@ end; $$;
 -- for each non_nullable_column
 -- loop over the entire table and add it to an array
 -- for each 
+
+
+-- might be better to create a function just for locations security table and then generalise
+
+--  AFTER REMOVING FOREIGN KEY CONSTRAINT
+
+-- create or replace function populate_security_on_grant_fn()
+-- returns trigger
+-- language PLPGSQL
+-- as $$
+-- declare
+-- role_membership_count bigint;
+-- p_table_name text;
+-- p_column_name text;
+-- p_access_level text;
+-- entries_count_for_person bigint;
+-- p_secure_id int;
+-- rec1 record;
+-- rec2 record;
+-- current_access_level text;
+-- begin
+-- 	p_table_name := quote_ident(new.table_name || '_security');
+-- 	p_column_name := quote_ident(new.column_name);
+-- 	p_access_level := quote_ident(new.access_level);
+	
+-- 	select count(*) from sys_role_memberships
+-- 	into role_membership_count
+-- 	where sys_role_id = new.sys_role_id;
+	
+-- 	if role_membership_count > 0 then
+	
+-- 		for rec1 in (select sys_person_id from sys_role_memberships
+-- 				     where sys_role_id = new.sys_role_id) loop
+					 
+-- 			select count(*) from p_table_name into entries_count_for_person
+-- 			where __sys_person_id = rec1.sys_person_id;
+			
+-- 			if entries_count_for_person == 0 then
+-- 				for rec2 in (select * from quote_ident(new.table_name)) loop 
+				
+-- 					execute format('insert into '|| p_table_name || '(__sys_person_id) values(' || 
+-- 					rec1.sys_person_id ||') returning sys_secure_id')into p_secure_id; 
+-- 					execute format('update '|| p_table_name || ' set ' || p_column_name 
+-- 								  || ' = ' || p_access_level|| ' where __sys_person_id = '|| rec1.sys_person_id);
+-- 			    end loop;
+-- 			else 
+-- 				select p_column_name from p_table_name into current_access_level 
+-- 				where __sys_person_id = rec1.sys_person_id limit 1;
+-- 				if current_access_level != 'Write' then
+-- 					execute format('update '|| p_table_name || ' set ' || p_column_name 
+-- 								  || ' = ' || p_access_level|| ' where __sys_person_id = '|| rec1.sys_person_id);
+-- -- 				else 
+-- -- 					do nothing
+-- 				end if;
+-- 			end if;
+-- 		end loop;
+-- 		raise info 'done';
+-- -- 	else 
+-- -- -- 		do nothing
+-- 	end if;
+-- 	return new;
+-- end; $$;
+					
+				
+create or replace function populate_security_on_grant_fn()
+returns trigger
+language PLPGSQL
+as $$
+declare
+role_membership_count bigint;
+p_base_table_name text;
+p_table_name text;
+p_column_name text;
+p_access_level text;
+entries_count_for_person bigint;
+p_secure_id int;
+rec1 record;
+rec2 record;
+current_access_level text;
+begin
+	p_table_name := new.table_name || '_security';
+	p_base_table_name := new.table_name;
+	p_column_name := '_' || new.column_name;
+	p_access_level := new.access_level;
+	raise info '%', p_table_name;
+	select count(*) from sys_role_memberships
+	into role_membership_count
+	where sys_role_id = new.sys_role_id;
+	
+	if role_membership_count > 0 then
+	
+		for rec1 in (select sys_person_id from sys_role_memberships
+				     where sys_role_id = new.sys_role_id) loop
+					 
+-- 			select count(*) from quote_ident(p_table_name) into entries_count_for_person
+-- 			where __sys_person_id = rec1.sys_person_id;
+
+		execute format('select count(*) from ' || quote_ident(p_table_name) ||' where __sys_person_id = '||rec1.sys_person_id)
+		into entries_count_for_person;
+			
+			if entries_count_for_person = 0 then
+				for rec2 in execute format('select * from ' || p_base_table_name) loop 
+				
+					execute format('insert into '|| p_table_name || '(__sys_person_id) values(' || 
+					rec1.sys_person_id ||') returning sys_secure_id')into p_secure_id; 
+					execute format('update '|| p_table_name || ' set ' || p_column_name 
+								  || ' = ' || quote_literal(p_access_level)|| ' where __sys_person_id = '|| rec1.sys_person_id);
+			    end loop;
+			else 
+-- 				select p_column_name from p_table_name into current_access_level 
+-- 				where __sys_person_id = rec1.sys_person_id limit 1;
+				execute format('select '|| p_column_name || ' from ' || p_table_name || ' 
+				where __sys_person_id =' || rec1.sys_person_id || ' limit 1') into current_access_level;
+				if current_access_level != 'Write' then
+					execute format('update '|| p_table_name || ' set ' || p_column_name 
+								  || ' = ' || quote_literal(p_access_level)|| ' where __sys_person_id = '|| rec1.sys_person_id);
+				end if;
+			end if;
+		end loop;
+		raise info 'done';
+	end if;
+	return new;
+end; $$;
