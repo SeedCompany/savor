@@ -200,7 +200,7 @@ create table if not exists sys_locations_security (
 	_created_at access_level,
 	_name access_level,
 	_sensitivity access_level,
-	_type access_level,
+	_type access_level
 	-- foreign key (__sys_location_id) references sys_locations(sys_location_id)
 );
 
