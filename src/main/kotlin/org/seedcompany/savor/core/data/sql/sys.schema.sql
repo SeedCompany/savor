@@ -38,18 +38,18 @@ END; $$;
 
 -- ROLES --------------------------------------------------------------------
 
-create table if not exists sys_roles (
-	sys_role_id serial primary key,
+create table if not exists sys_global_roles (
+	sys_global_role_id serial primary key,
 	sys_org_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) not null,
 	unique (sys_org_id, name)
 );
 
-create table if not exists sys_roles_history (
+create table if not exists sys_global_roles_history (
 	_history_id serial primary key,
 	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	sys_role_id int,
+	sys_global_role_id int,
 	sys_org_id int,
 	created_at timestamp,
 	name varchar(255)
@@ -70,9 +70,9 @@ DO $$ BEGIN
 		'sys_organizations',
 		'sys_people_to_org_relationships',
 		'sys_people_to_org_relationship_type',
-		'sys_roles',
-		'sys_role_grants',
-		'sys_role_memberships',
+		'sys_global_roles',
+		'sys_global_role_grants',
+		'sys_global_role_memberships',
 		'sys_users',
 		'sys_projects',
 		'sys_tokens',
@@ -111,38 +111,38 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists sys_role_grants (
-	sys_role_id int not null,
+create table if not exists sys_global_role_grants (
+	sys_global_role_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	table_name table_name not null,
 	column_name varchar(32) not null,
 	access_level access_level not null,
-	primary key (sys_role_id, table_name, column_name, access_level),
-	foreign key (sys_role_id) references sys_roles(sys_role_id)
+	primary key (sys_global_role_id, table_name, column_name, access_level),
+	foreign key (sys_global_role_id) references sys_global_roles(sys_global_role_id)
 );
 
-create table if not exists sys_role_grants_history (
+create table if not exists sys_global_role_grants_history (
 	_history_id serial primary key,
 	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	sys_role_id int,
+	sys_global_role_id int,
 	created_at timestamp,
 	table_name table_name,
 	column_name varchar(32),
 	access_level access_level
 );
 
-create table if not exists sys_role_memberships (
+create table if not exists sys_global_role_memberships (
 	sys_person_id int,
-	sys_role_id int,
+	sys_global_role_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	foreign key (sys_role_id) references sys_roles(sys_role_id)
+	foreign key (sys_global_role_id) references sys_global_roles(sys_global_role_id)
 );
 
-create table if not exists sys_role_memberships_history (
+create table if not exists sys_global_role_memberships_history (
 	_history_id serial primary key,
 	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
 	sys_person_id int,
-	sys_role_id int,
+	sys_global_role_id int,
 	created_at timestamp
 );
 
@@ -355,6 +355,7 @@ create table if not exists sys_people (
     primary_sys_location_id int,
     private_full_name varchar(64),
     public_full_name varchar(64),
+    sensitivity_clearance sensitivity default 'Low',
     time_zone varchar(32),
     title varchar(255),
     --foreign key (primary_sys_org_id) references sys_organizations(sys_org_id),
@@ -377,16 +378,17 @@ create table if not exists sys_people_history (
     primary_sys_location_id int,
     private_full_name varchar(64),
     public_full_name varchar(64),
+    sensitivity_clearance sensitivity,
     time_zone varchar(32),
     title varchar(255)
 );
 
--- fkey for sys_role_memberships
+-- fkey for sys_global_role_memberships
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_memberships_person_id_fkey') THEN
-        ALTER TABLE sys_role_memberships
-            ADD CONSTRAINT sys_role_memberships_person_id_fkey
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_global_role_memberships_person_id_fkey') THEN
+        ALTER TABLE sys_global_role_memberships
+            ADD CONSTRAINT sys_global_role_memberships_person_id_fkey
             foreign key (sys_person_id) references sys_people(sys_person_id);
     END IF;
 END;
@@ -456,6 +458,7 @@ create table if not exists sys_organizations (
 	sys_org_id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) unique not null,
+	sensitivity sensitivity default 'High',
 	primary_sys_location_id int,
 	foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
 );
@@ -471,12 +474,12 @@ BEGIN
 END;
 $$;
 
--- fkey for sys_roles
+-- fkey for sys_global_roles
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_role_org_id_fkey') THEN
-        ALTER TABLE sys_roles
-            ADD CONSTRAINT sys_role_org_id_fkey
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'sys_global_role_org_id_fkey') THEN
+        ALTER TABLE sys_global_roles
+            ADD CONSTRAINT sys_global_role_org_id_fkey
             foreign key (sys_org_id) references sys_organizations(sys_org_id);
     END IF;
 END;
@@ -508,6 +511,32 @@ DO $$ BEGIN
 	EXCEPTION
 	WHEN duplicate_object THEN null;
 END; $$;
+
+create table if not exists sys_organization_grants(
+    sys_org_id int not null,
+    table_name table_name not null,
+    column_name varchar(32) not null,
+    access_level access_level not null,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    primary key (sys_org_id, table_name, column_name, access_level),
+    foreign key (sys_org_id) references sys_organizations(sys_org_id)
+);
+
+create table if not exists sys_organization_memberships(
+    sys_person_id int not null,
+    sys_org_id int not null,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    foreign key (sys_org_id) references sys_organizations(sys_org_id),
+    foreign key (sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sys_organization_memberships_history(
+    _history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_person_id int,
+    sys_org_id int,
+    created_at timestamp
+);
 
 create table if not exists sys_people_to_org_relationships (
     sys_people_to_org_id serial primary key,
@@ -586,6 +615,7 @@ create table if not exists sys_projects (
 	name varchar(32) not null,
 	primary_sys_org_id int,
 	primary_sys_location_id int,
+	sensitivity sensitivity default 'High',
 	unique (primary_sys_org_id, name),
 	foreign key (primary_sys_org_id) references sys_organizations(sys_org_id),
 	foreign key (primary_sys_location_id) references sys_locations(sys_location_id)
@@ -600,6 +630,80 @@ create table if not exists sys_projects_history (
 	primary_sys_org_id int,
 	primary_sys_location_id int
 );
+
+create table if not exists sys_project_memberships (
+    sys_project_id int not null,
+    sys_person_id int not null,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    foreign key (sys_project_id) references sys_projects(sys_project_id),
+    foreign key (sys_person_id) references sys_people(sys_person_id)
+);
+
+create table if not exists sys_project_members_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    sys_person_id int,
+	created_at timestamp
+);
+
+create table if not exists sys_project_roles (
+	sys_project_role_id serial primary key,
+	sys_org_id int,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	name varchar(255) not null,
+	unique (sys_org_id, name)
+);
+
+create table if not exists sys_project_roles_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_project_role_id int,
+	sys_org_id int,
+	created_at timestamp,
+	name varchar(255)
+);
+
+create table if not exists sys_project_role_grants (
+	sys_project_role_id int not null,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	table_name table_name not null,
+	column_name varchar(32) not null,
+	access_level access_level not null,
+	primary key (sys_project_role_id, table_name, column_name, access_level),
+	foreign key (sys_project_role_id) references sys_project_roles(sys_project_role_id)
+);
+
+create table if not exists sys_project_role_grants_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+	sys_project_role_id int,
+	created_at timestamp,
+	table_name table_name,
+	column_name varchar(32),
+	access_level access_level
+);
+
+create table if not exists sys_project_member_roles (
+    sys_project_id int not null,
+    sys_person_id int not null,
+	sys_project_role_id int,
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	primary key (sys_project_id, sys_person_id),
+	foreign key (sys_project_id) references sys_projects(sys_project_id),
+	foreign key (sys_person_id) references sys_people(sys_person_id),
+	foreign key (sys_project_role_id) references sys_project_roles(sys_project_role_id)
+);
+
+create table if not exists sys_project_member_roles_history (
+	_history_id serial primary key,
+	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
+    sys_project_id int,
+    sys_person_id int,
+	sys_project_role_id int
+	created_at timestamp,
+);
+
 
 -- AUTHENTICATION ------------------------------------------------------------
 

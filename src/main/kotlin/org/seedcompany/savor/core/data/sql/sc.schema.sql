@@ -596,49 +596,6 @@ create table if not exists sc_project_locations_history (
 	created_at timestamp
 );
 
--- PROJECT MEMBERS
-
-create table if not exists sc_project_members (
-    sys_project_id int not null,
-    sys_person_id int not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	modified_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_project_id, sys_person_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (sys_person_id) references sys_people(sys_person_id)
-);
-
-create table if not exists sc_project_members_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    sys_project_id int,
-    sys_person_id int,
-	created_at timestamp,
-	modified_at timestamp
-);
-
-create table if not exists sc_project_member_roles (
-    sys_project_id int not null,
-    sys_person_id int not null,
-	created_at timestamp not null default CURRENT_TIMESTAMP,
-	modified_at timestamp not null default CURRENT_TIMESTAMP,
-	role_sys_org_id int,
-	primary key (sys_project_id, sys_person_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (sys_person_id) references sys_people(sys_person_id),
-	foreign key (role_sys_org_id) references sys_organizations(sys_org_id)
-);
-
-create table if not exists sc_project_member_roles_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    sys_project_id int,
-    sys_person_id int,
-	created_at timestamp,
-	modified_at timestamp,
-	role_sys_org_id int
-);
-
 -- LANGUAGE ENGAGEMENTS
 
 -- todo
