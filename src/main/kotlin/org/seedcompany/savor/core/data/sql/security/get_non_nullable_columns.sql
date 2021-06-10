@@ -39,9 +39,11 @@ begin
  		if rec0.column_name != '__sys_person_id' and rec0.column_name != 'sys_secure_id' then
 			rec0.column_name := replace(rec0.column_name, '__', '');
 			non_nullable_columns := non_nullable_columns || ',' || rec0.column_name;
+			-- create the value string also here itself
 		end if;
 	end loop;
 	non_nullable_columns := substr(non_nullable_columns, 2, length(non_nullable_columns) - 1);
+
 	execute format('select '|| non_nullable_columns ||' from '|| new.table_name || ' limit 1') into rec1;
 -- 	rec1 := cast(rec1 as text);
 -- 	rec1 := substr(rec1, 2, length(rec1) - 2);
