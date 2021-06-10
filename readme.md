@@ -2,28 +2,23 @@
 
 Experiment in a common Postgres DB for DA/DevOps
 
-# API
+## API Setup
 
-- Create an application.conf file in the apiMain resources folder. Look at the Config service for its structure. Here is a sample:
+- Create src/main/resources/application.yml with the following structure. Replace values as needed.
 
-savor {
-postgres {
-url = ""
-database = ""
-user = ""
-password = ""
-}
-neo4j {
-url = ""
-database = ""
-user = ""
-password = ""
-}
-}
-
-## Todo
-
-Currently using the blocking JDBC driver for Postgres. Need to upgrade to a non-blocking lib.
+```
+postgres:
+    url: jdbc:postgresql://localhost
+    database: postgres
+    user: postgres
+    password: admin
+    port: 5432
+neo4j:
+  url: bolt://localhost:7687
+  database: neo4j
+  user: neo4j
+  password: test
+```
 
 ## Database Design Principles
 
