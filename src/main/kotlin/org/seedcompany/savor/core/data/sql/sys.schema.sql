@@ -187,6 +187,7 @@ END; $$;
 
 create table if not exists sys_locations (
 	sys_location_id serial primary key,
+	reference_count serial, 
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) unique not null,
 	sensitivity sensitivity not null default 'High',
@@ -195,13 +196,13 @@ create table if not exists sys_locations (
 
 create table if not exists sys_locations_security (
     __sys_person_id int not null,
-    -- __sys_location_id int not null,
+    __sys_location_id int not null,
 	_sys_location_id access_level,
 	_created_at access_level,
 	_name access_level,
 	_sensitivity access_level,
 	_type access_level,
-	-- foreign key (__sys_location_id) references sys_locations(sys_location_id)
+	foreign key (__sys_location_id) references sys_locations(sys_location_id)
 );
 
 create table if not exists sys_locations_history (
@@ -214,29 +215,29 @@ create table if not exists sys_locations_history (
 	type location_type
 );
 
-CREATE OR REPLACE FUNCTION locations_history_fn()
-  RETURNS TRIGGER
-  LANGUAGE PLPGSQL
-  AS $$
-begin
-    insert into sys_locations_history("sys_location_id", "created_at", "name", "sensitivity", "type")
-    values (new.sys_location_id, new.created_at, new.name, new.sensitivity, new.type);
-	RETURN NEW;
-end; $$;
+-- CREATE OR REPLACE FUNCTION locations_history_fn()
+--   RETURNS TRIGGER
+--   LANGUAGE PLPGSQL
+--   AS $$
+-- begin
+--     insert into sys_locations_history("sys_location_id", "created_at", "name", "sensitivity", "type")
+--     values (new.sys_location_id, new.created_at, new.name, new.sensitivity, new.type);
+-- 	RETURN NEW;
+-- end; $$;
 
-DROP TRIGGER IF EXISTS locations_history_insert_trigger ON public.sys_locations;
-CREATE TRIGGER locations_history_insert_trigger
-  AFTER INSERT
-  ON sys_locations
-  FOR EACH ROW
-  EXECUTE PROCEDURE locations_history_fn();
+-- DROP TRIGGER IF EXISTS locations_history_insert_trigger ON public.sys_locations;
+-- CREATE TRIGGER locations_history_insert_trigger
+--   AFTER INSERT
+--   ON sys_locations
+--   FOR EACH ROW
+--   EXECUTE PROCEDURE locations_history_fn();
 
-DROP TRIGGER IF EXISTS locations_history_update_trigger ON public.sys_locations;
-CREATE TRIGGER locations_history_update_trigger
-  AFTER UPDATE
-  ON sys_locations
-  FOR EACH ROW
-  EXECUTE PROCEDURE locations_history_fn();
+-- DROP TRIGGER IF EXISTS locations_history_update_trigger ON public.sys_locations;
+-- CREATE TRIGGER locations_history_update_trigger
+--   AFTER UPDATE
+--   ON sys_locations
+--   FOR EACH ROW
+--   EXECUTE PROCEDURE locations_history_fn();
 
 create materialized view if not exists sys_locations_secure_view as
     select
@@ -341,6 +342,7 @@ create table if not exists sil_table_of_languages_history (
 
 create table if not exists sys_people (
     sys_person_id serial primary key,
+	reference_count serial,
     about text,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     phone varchar(32),
@@ -391,7 +393,7 @@ END;
 $$;
 
 create table if not exists sys_people_security (
-    _sys_person_id int,
+    __sys_person_id int,
     sys_person_id access_level,
     about access_level,
     created_at access_level,
