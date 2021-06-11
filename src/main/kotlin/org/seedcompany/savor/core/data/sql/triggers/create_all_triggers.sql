@@ -37,3 +37,5 @@ begin
 	END loop;
 	raise info 'DONE';
 end; $$;
+
+select create_all_triggers_fn();
