@@ -394,24 +394,23 @@ $$;
 
 create table if not exists sys_people_security (
     __sys_person_id int,
-    sys_person_id access_level,
-    about access_level,
-    created_at access_level,
-    phone access_level,
-	picture access_level,
-    primary_sys_org_id access_level,
-    private_first_name access_level,
-    private_last_name access_level,
-    public_first_name access_level,
-    public_last_name access_level,
-    primary_sys_location_id access_level,
-    private_full_name access_level,
-    public_full_name access_level,
-    time_zone access_level,
-    title access_level,
-    foreign key (_sys_person_id) references sys_people(sys_person_id)
+    _sys_person_id access_level,
+    _about access_level,
+    _created_at access_level,
+    _phone access_level,
+	_picture access_level,
+    _primary_sys_org_id access_level,
+    _private_first_name access_level,
+    _private_last_name access_level,
+    _public_first_name access_level,
+    _public_last_name access_level,
+    _primary_sys_location_id access_level,
+    _private_full_name access_level,
+    _public_full_name access_level,
+    _time_zone access_level,
+    _title access_level,
+    foreign key (__sys_person_id) references sys_people(sys_person_id)
 );
-
 -- Education
 
 create table if not exists sys_education_entries (
