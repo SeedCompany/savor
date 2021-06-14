@@ -32,3 +32,7 @@ select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'sens
 
 -- ROLE MEMBERSHIPS
 select * from sys_add_role_member('Admin', 'Seed Company', 'michael_marshall@tsco.org');
+select * from sys_add_role_member('Admin', 'Seed Company', 'sc_admin@asdf.com')
+
+
+-- select * from sys_users s join sys_people p on s.sys_person_id = p.sys_person_id;
