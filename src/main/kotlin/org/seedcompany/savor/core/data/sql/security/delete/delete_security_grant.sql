@@ -7,20 +7,23 @@ role_membership_count bigint;
 entries_count_for_person bigint;
 new_access_level text;
 rec1 record;
+security_table_name text;
+security_column_name text;
 begin
-	-- checking if there are members for the role
-	select count(*) from sys_role_memberships
-	into role_membership_count
-	where sys_role_id = new.sys_role_id;
-	
-	if role_membership_count > 0 then					 
-	-- looping over each person belonging to the role
+    security_table_name := old.table_name || '_security';
+    security_column_name := '_' || old.column_name;
+	raise info 'table: % - column: %', security_table_name, security_column_name;
 		for rec1 in (select sys_person_id from sys_role_memberships
-				     where sys_role_id = new.sys_role_id) loop
-			select get_access_level(rec1.sys_person_id, new.table_name, new.column_name) into new_access_level;
+				     where sys_role_id = old.sys_role_id) loop
+			select get_access_level(rec1.sys_person_id, old.table_name, old.column_name) into new_access_level;
+            if new_access_level is null then 
+				raise info 'new_access_level: %', new_access_level;
+                execute format('update '|| security_table_name ||' set '|| security_column_name || ' = NULL  where __sys_person_id = '|| rec1.sys_person_id );
+            else 
+                execute format('update '|| security_table_name ||' set '|| security_column_name ' = '|| new_access_level || ' where __sys_person_id = ' || rec1.sys_person_id);
+            end if;
 		end loop;
 		raise info 'done';
-	end if;
 	return new;
 end; $$;
 
