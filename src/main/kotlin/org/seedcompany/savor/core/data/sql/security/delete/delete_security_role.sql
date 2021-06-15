@@ -21,7 +21,7 @@ begin
 				raise info 'new_access_level: %', new_access_level;
                 execute format('update '|| security_table_name ||' set '|| security_column_name || ' = NULL  where __sys_person_id = '|| p_person_id );
             else 
-                execute format('update '|| security_table_name ||' set '|| security_column_name || ' = '|| new_access_level || ' where __sys_person_id = ' || p_person_id);
+                execute format('update '|| security_table_name ||' set '|| security_column_name || ' = '|| quote_literal(new_access_level) || ' where __sys_person_id = ' || p_person_id);
         end if;
 
     end loop;
@@ -37,4 +37,4 @@ CREATE TRIGGER sys_role_memberships_delete_trigger
 AFTER DELETE
 ON sys_role_memberships
 FOR EACH ROW
-EXECUTE PROCEDURE delete_security_on_role_fn();
+EXECUTE PROCEDURE delete_security_on_roles_fn();
