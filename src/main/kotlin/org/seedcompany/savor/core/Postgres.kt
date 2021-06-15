@@ -27,19 +27,11 @@ class Postgres(
         val statement = conn.createStatement()
 
         // load schema and initial data - commands are idempotent
-        val sysSchema = File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.schema.sql").readText()
-        val scSchema = File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sc.schema.sql").readText()
-
-        val sysAuthenFn = File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.authen.fn.sql").readText()
-        val sysRoleFn = File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.roles.fn.sql").readText()
-
-        val data = File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/bootstrap.data.sql").readText()
-
-        statement.execute(sysSchema)
-        statement.execute(scSchema)
-        statement.execute(sysAuthenFn)
-        statement.execute(sysRoleFn)
-        statement.execute(data)
+        statement.execute(File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.schema.sql").readText())
+//        statement.execute(File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sc.schema.sql").readText())
+//        statement.execute(File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.authen.fn.sql").readText())
+//        statement.execute(File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/sys.roles.fn.sql").readText())
+//        statement.execute(File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/bootstrap.data.sql").readText())
 
         statement.close()
     }
