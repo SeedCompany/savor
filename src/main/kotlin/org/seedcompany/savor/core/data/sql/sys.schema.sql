@@ -40,10 +40,21 @@ END; $$;
 
 create table if not exists sys_roles (
 	sys_role_id serial primary key,
+	reference_count serial,
 	sys_org_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	name varchar(255) not null,
 	unique (sys_org_id, name)
+);
+
+create table if not exists sys_roles_security(
+	__sys_role_id int not null, 
+	__sys_person_id int not null,
+	_sys_ord_id access_level,
+	_created_at access_level,
+	_name access_level,
+	foreign key (__sys_role_id) references sys_roles(sys_role_id)
+
 );
 
 create table if not exists sys_roles_history (
@@ -195,6 +206,7 @@ create table if not exists sys_locations (
 );
 
 create table if not exists sys_locations_security (
+	reference_count serial,
     __sys_person_id int not null,
     __sys_location_id int not null,
 	_sys_location_id access_level,

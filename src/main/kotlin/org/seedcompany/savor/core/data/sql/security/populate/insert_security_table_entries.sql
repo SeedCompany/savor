@@ -1,3 +1,4 @@
+-- each base table needs to have a serial column named reference_count 
 create or replace function insert_security_table_entries(p_person_id int, p_table_name table_name, p_column_name varchar(255), p_access_level access_level)
 returns void 
 language PLPGSQL
