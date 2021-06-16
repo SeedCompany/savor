@@ -12,19 +12,19 @@ declare
     vOrgId INT;
 begin
     SELECT person_id
-    FROM public.users
+    FROM public.users_data
     INTO vSysPersonId
-    WHERE users.email = pEmail;
+    WHERE users_data.email = pEmail;
     IF NOT found THEN
         SELECT id
-        FROM public.organizations
+        FROM public.organizations_data
         INTO vOrgId
-        WHERE organizations.name = pOrgName;
+        WHERE organizations_data.name = pOrgName;
         IF found THEN
-            INSERT INTO public.people VALUES (DEFAULT)
+            INSERT INTO public.people_data VALUES (DEFAULT)
             RETURNING id
             INTO vSysPersonId;
-            INSERT INTO public.users("person_id", "email", "password", "owning_org_id")
+            INSERT INTO public.users_data("person_id", "email", "password", "owning_org_id")
             VALUES (vSysPersonId, pEmail, pPassword, vOrgId);
             vResponseCode := 0;
         ELSE
@@ -46,13 +46,13 @@ language plpgsql
 as $$
 declare
     vResponseCode INT;
-    vRow public.users%ROWTYPE;
+    vRow public.users_data%ROWTYPE;
     vId INT;
 begin
     SELECT *
-    FROM public.users
+    FROM public.users_data
     INTO vRow
-    WHERE users.email = pEmail AND users.password = pPassword;
+    WHERE users_data.email = pEmail AND users_data.password = pPassword;
     IF found THEN
         INSERT INTO public.tokens("token", "person_id")
         VALUES (pToken, vRow.person_id);
