@@ -180,34 +180,6 @@ create table if not exists public.locations_data (
 --	foreign key (created_by) references public.people(id)
 );
 
-create table if not exists public.locations_security (
-    __person_id int not null,
-    __id int not null,
-	_id access_level,
-	_created_at access_level,
-	_created_by access_level,
-	_name access_level,
-	_sensitivity access_level,
-	_type access_level,
-	foreign key (__id) references public.locations(id),
---	foreign key (__person_id) references public.people(id)
-);
-
-create materialized view if not exists public.locations_secure_view as
-    select
- 		__person_id,
- 		__id,
- 		case when _id = 'Read' or _id = 'Write' then id end id,
- 		case when _created_at = 'Read' or _created_at = 'Write' then created_at end created_at,
- 		case when _created_by = 'Read' or _created_by = 'Write' then created_by end created_by,
- 		case when _name = 'Read' or _name = 'Write' then name end "name",
- 		case when _sensitivity = 'Read' or _sensitivity = 'Write' then sensitivity end sensitivity,
- 		case when _type = 'Read' or _type = 'Write' then type end "type"
-  	from public.locations_security
-  	join public.locations
-  	on locations_security.__id = locations.id
-with no data;
-
 REFRESH MATERIALIZED VIEW public.locations_secure_view;
 
 CREATE UNIQUE INDEX IF NOT EXISTS public_locations_secure_view_uniq
@@ -307,27 +279,6 @@ END IF; END; $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_locations_created_by_fk') THEN
 ALTER TABLE public.locations ADD CONSTRAINT public_locations_created_by_fk foreign key (created_by) references people(id);
 END IF; END; $$;
-
-create table if not exists public.people_security (
-    __id int not null,
-    _id access_level,
-    _about access_level,
-    _created_at access_level,
-    _created_by access_level,
-    _phone access_level,
-	_picture access_level,
-    _primary_org_id access_level,
-    _private_first_name access_level,
-    _private_last_name access_level,
-    _public_first_name access_level,
-    _public_last_name access_level,
-    _primary_location_id access_level,
-    _private_full_name access_level,
-    _public_full_name access_level,
-    _time_zone access_level,
-    _title access_level,
-    foreign key (__id) references people(id)
-);
 
 -- Education
 
@@ -458,16 +409,6 @@ create table if not exists public.users_data(
 	foreign key (person_id) references public.people(id),
 	foreign key (owning_org_id) references public.organizations(id)
 );
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loc_sec_person_id_fkey') THEN
-        ALTER TABLE locations_security
-            ADD CONSTRAINT loc_sec_person_id_fkey
-            foreign key (__person_id) references people(id);
-    END IF;
-END;
-$$;
 
 -- PROJECTS ------------------------------------------------------------------
 
