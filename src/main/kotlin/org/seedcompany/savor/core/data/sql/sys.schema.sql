@@ -38,7 +38,7 @@ END; $$;
 
 -- ROLES --------------------------------------------------------------------
 
-create table if not exists public.global_roles (
+create table if not exists public.global_roles_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -116,7 +116,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.global_role_grants (
+create table if not exists public.global_role_grants_data (
 	id serial primary key,
 	access_level access_level not null,
 	column_name varchar(32) not null,
@@ -141,7 +141,7 @@ create table if not exists public.global_role_grants_history (
 	access_level access_level
 );
 
-create table if not exists public.global_role_memberships (
+create table if not exists public.global_role_memberships_data (
     id serial primary key,
 	global_role_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -174,7 +174,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.scripture_references (
+create table if not exists public.scripture_references_data (
     id serial primary key,
     book_start book_name,
     book_end book_name,
@@ -202,7 +202,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.locations (
+create table if not exists public.locations_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -341,7 +341,7 @@ create table if not exists sil.table_of_languages_history (
 
 -- PEOPLE ------------------------------------------------------------
 
-create table if not exists public.people (
+create table if not exists public.people_data (
     id serial primary key,
 	reference_count serial,
     about text,
@@ -435,7 +435,7 @@ create table if not exists public.people_security (
 
 -- Education
 
-create table if not exists public.education_entries (
+create table if not exists public.education_entries_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     degree varchar(64),
@@ -453,7 +453,7 @@ create table if not exists public.education_entries_history (
     major varchar(64)
 );
 
-create table if not exists public.education_by_person (
+create table if not exists public.education_by_person_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -478,7 +478,7 @@ create table if not exists public.education_by_person_history (
 
 -- ORGANIZATIONS ------------------------------------------------------------
 
-create table if not exists public.organizations (
+create table if not exists public.organizations_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -532,7 +532,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.organization_grants(
+create table if not exists public.organization_grants_data(
     id serial primary key,
     access_level access_level not null,
     created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -545,7 +545,7 @@ create table if not exists public.organization_grants(
     foreign key (org_id) references organizations(id)
 );
 
-create table if not exists public.organization_memberships(
+create table if not exists public.organization_memberships_data(
     id serial primary key,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null default 0,
@@ -566,7 +566,7 @@ create table if not exists public.organization_memberships_history(
     person_id int
 );
 
-create table if not exists public.people_to_org_relationships (
+create table if not exists public.people_to_org_relationships_data (
     id serial primary key,
 	org_id int,
 	person_id int,
@@ -587,7 +587,7 @@ create table if not exists public.people_to_org_relationships_history (
 	created_by int
 );
 
-create table if not exists public.people_to_org_relationship_type (
+create table if not exists public.people_to_org_relationship_type_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -613,7 +613,7 @@ create table if not exists public.people_to_org_relationship_type_history (
 
 -- USERS ---------------------------------------------------------------------
 
-create table if not exists public.users(
+create table if not exists public.users_data(
     id serial primary key,
 	person_id int not null,
 	owning_org_id int not null,
@@ -650,7 +650,7 @@ $$;
 
 -- PROJECTS ------------------------------------------------------------------
 
-create table if not exists public.projects (
+create table if not exists public.projects_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -676,7 +676,7 @@ create table if not exists public.projects_history (
 	sensitivity sensitivity
 );
 
-create table if not exists public.project_memberships (
+create table if not exists public.project_memberships_data (
     id serial primary key,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null default 0,
@@ -697,7 +697,7 @@ create table if not exists public.project_members_history (
     project_id int
 );
 
-create table if not exists public.project_roles (
+create table if not exists public.project_roles_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
@@ -719,7 +719,7 @@ create table if not exists public.project_roles_history (
 	project_role_id int
 );
 
-create table if not exists public.project_role_grants (
+create table if not exists public.project_role_grants_data (
     id serial primary key,
 	access_level access_level not null,
 	column_name varchar(32) not null,
@@ -744,7 +744,7 @@ create table if not exists public.project_role_grants_history (
 	table_name table_name
 );
 
-create table if not exists public.project_member_roles (
+create table if not exists public.project_member_roles_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
