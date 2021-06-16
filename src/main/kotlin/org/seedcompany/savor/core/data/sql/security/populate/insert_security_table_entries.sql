@@ -19,6 +19,7 @@ row_level_access access_level;
 final_access_level access_level;
 begin 
 	p_column_name := '_' || p_column_name;
+    -- p_table_name := replace(p_table_name, 'public.', '');
     security_table_name := p_table_name || '_security';
     execute format('select count(*) from ' || quote_ident(security_table_name) ||' where __sys_person_id = '||p_person_id) into entries_count_for_person;
 	
@@ -40,7 +41,7 @@ begin
 
                         rec2.column_name := replace(rec2.column_name, '__', '');
                         execute format('select ' || rec2.column_name || ' from ' || p_table_name ||
-                            ' where reference_count = '|| rec1.reference_count) into base_table_column_value;
+                            ' where id = '|| rec1.id) into base_table_column_value;
 
                         raise info 'base_table_column_name: % ', rec2.column_name;
                         raise info 'base_table_column_value: % ', base_table_column_value;
@@ -72,7 +73,7 @@ begin
 
                 -- currently the logic only accounts for sys_locations (thinking of using case statements here for tables)
                 
-                if p_table_name = 'sys_locations' then 
+                if p_table_name = 'public.locations' then 
                     select get_row_level_access(p_person_id, p_table_name,p_column_name) into row_level_access;
                 end if;
 
