@@ -49,16 +49,6 @@ create table if not exists public.global_roles_data (
 --	foreign key (org_id) references public.organizations(id)
 );
 
-create table if not exists public.global_roles_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int not null default 0,
-	name varchar(255),
-	org_id int
-);
-
 DO $$ BEGIN
     create type public.table_name as enum (
 		'public.scripture_references',
@@ -129,18 +119,6 @@ create table if not exists public.global_role_grants_data (
 	foreign key (global_role_id) references public.global_roles(id)
 );
 
-create table if not exists public.global_role_grants_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	global_role_id int,
-	created_at timestamp,
-	created_by int,
-	table_name table_name,
-	column_name varchar(32),
-	access_level access_level
-);
-
 create table if not exists public.global_role_memberships_data (
     id serial primary key,
 	global_role_id int,
@@ -149,16 +127,6 @@ create table if not exists public.global_role_memberships_data (
 	person_id int,
 --	foreign key (created_by) references public.people(id),
 	foreign key (global_role_id) references global_roles(id)
-);
-
-create table if not exists public.global_role_memberships_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-	global_role_id int,
-	person_id int
 );
 
 -- SCRIPTURE REFERENCE -----------------------------------------------------------------
@@ -212,17 +180,6 @@ create table if not exists public.locations_data (
 --	foreign key (created_by) references public.people(id)
 );
 
-create table if not exists public.locations_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-	name varchar(255),
-	sensitivity sensitivity,
-	type location_type
-);
-
 create table if not exists public.locations_security (
     __person_id int not null,
     __id int not null,
@@ -274,27 +231,10 @@ CREATE TABLE if not exists sil.language_codes (
    name varchar(75) not null   -- Primary name in that country
 );
 
-CREATE TABLE if not exists sil.language_codes_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-   lang_id char(3),
-   country_id char(2),
-   lang_status char(1),
-   name varchar(75)
-);
-
 CREATE TABLE if not exists sil.country_codes (
    country_id char(2) not null,  -- Two-letter code from ISO3166
    name varchar(75) not null,  -- Country name
    area varchar(10) not null -- World area
-);
-
-CREATE TABLE if not exists sil.country_codes_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-   country_id char(2),
-   name varchar(75),
-   area varchar(10)
 );
 
 CREATE TABLE if not exists sil.language_index (
@@ -306,15 +246,6 @@ CREATE TABLE if not exists sil.language_index (
    name  varchar(75) not null
 );
 
-CREATE TABLE if not exists sil.language_index_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-   lang_id char(3),
-   country_id char(2),
-   name_type char(2),
-   name  varchar(75)
-);
-
 create table if not exists sil.table_of_languages (
     sil_ethnologue_id serial primary key,
     sil_ethnologue_legacy_id varchar(32),
@@ -322,19 +253,6 @@ create table if not exists sil.table_of_languages (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	code varchar(32),
 	language_name varchar(50) not null,
-	population int,
-	provisional_code varchar(32)
-);
-
-create table if not exists sil.table_of_languages_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    sil_ethnologue_id int,
-    sil_ethnologue_legacy_id varchar(32),
-	iso_639 char(3),
-	created_at timestamp,
-	code varchar(32),
-	language_name varchar(50),
 	population int,
 	provisional_code varchar(32)
 );
@@ -363,28 +281,6 @@ create table if not exists public.people_data (
     foreign key (created_by) references public.people(id),
 --    foreign key (primary_org_id) references public.organizations(id),
     foreign key (primary_location_id) references public.locations(id)
-);
-
-create table if not exists public.people_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    id int,
-    about text,
-    created_at timestamp,
-    created_by int,
-    phone varchar(32),
-	picture varchar(255),
-    primary_org_id int,
-    private_first_name varchar(32),
-    private_last_name varchar(32),
-    public_first_name varchar(32),
-    public_last_name varchar(32),
-    primary_location_id int,
-    private_full_name varchar(64),
-    public_full_name varchar(64),
-    sensitivity_clearance sensitivity,
-    time_zone varchar(32),
-    title varchar(255)
 );
 
 -- fkey for a bunch of stuff
@@ -443,16 +339,6 @@ create table if not exists public.education_entries_data (
     major varchar(64)
 );
 
-create table if not exists public.education_entries_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    id int,
-	created_at timestamp,
-    degree varchar(64),
-    institution varchar(64),
-    major varchar(64)
-);
-
 create table if not exists public.education_by_person_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -463,17 +349,6 @@ create table if not exists public.education_by_person_data (
     foreign key (created_by) references public.people(id),
 	foreign key (person_id) references public.people(id),
 	foreign key (education_id) references public.education_entries(id)
-);
-
-create table if not exists public.education_by_person_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-    education_id int,
-    graduation_year int,
-    person_id int
 );
 
 -- ORGANIZATIONS ------------------------------------------------------------
@@ -487,16 +362,6 @@ create table if not exists public.organizations_data (
 	primary_location_id int,
 	foreign key (created_by) references public.people(id),
 	foreign key (primary_location_id) references locations(id)
-);
-
-create table if not exists public.organizations_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-	name varchar(255),
-	primary_location_id int
 );
 
 
@@ -556,16 +421,6 @@ create table if not exists public.organization_memberships_data(
     foreign key (person_id) references people(id)
 );
 
-create table if not exists public.organization_memberships_history(
-    _history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-    created_at timestamp,
-    created_by int,
-    org_id int,
-    person_id int
-);
-
 create table if not exists public.people_to_org_relationships_data (
     id serial primary key,
 	org_id int,
@@ -575,16 +430,6 @@ create table if not exists public.people_to_org_relationships_data (
 	foreign key (created_by) references public.people(id),
 	foreign key (org_id) references organizations(id),
 	foreign key (person_id) references people(id)
-);
-
-create table if not exists public.people_to_org_relationships_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-    id int,
-	org_id int,
-	person_id int,
-	created_at timestamp,
-	created_by int
 );
 
 create table if not exists public.people_to_org_relationship_type_data (
@@ -597,18 +442,6 @@ create table if not exists public.people_to_org_relationship_type_data (
 	relationship_type person_to_org_relationship_type,
 	foreign key (created_by) references public.people(id),
 	foreign key (people_to_org_id) references people_to_org_relationships(id)
-);
-
-create table if not exists public.people_to_org_relationship_type_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-    begin_at timestamp,
-	created_at timestamp,
-	created_by int,
-	end_at timestamp,
-    people_to_org_id int,
-	relationship_type person_to_org_relationship_type
 );
 
 -- USERS ---------------------------------------------------------------------
@@ -624,18 +457,6 @@ create table if not exists public.users_data(
 	foreign key (created_by) references public.people(id),
 	foreign key (person_id) references public.people(id),
 	foreign key (owning_org_id) references public.organizations(id)
-);
-
-create table if not exists public.users_history(
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	person_id int,
-	owning_org_id int,
-	email varchar(255),
-	password varchar(255),
-	created_at timestamp,
-	created_by int
 );
 
 DO $$
@@ -664,18 +485,6 @@ create table if not exists public.projects_data (
 	foreign key (primary_location_id) references locations(id)
 );
 
-create table if not exists public.projects_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-	name varchar(32),
-	primary_org_id int,
-	primary_location_id int,
-	sensitivity sensitivity
-);
-
 create table if not exists public.project_memberships_data (
     id serial primary key,
     created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -687,16 +496,6 @@ create table if not exists public.project_memberships_data (
     foreign key (person_id) references people(id)
 );
 
-create table if not exists public.project_members_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-    person_id int,
-    project_id int
-);
-
 create table if not exists public.project_roles_data (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -706,17 +505,6 @@ create table if not exists public.project_roles_data (
 	unique (org_id, name),
 	foreign key (created_by) references public.people(id),
 	foreign key (org_id) references public.organizations(id)
-);
-
-create table if not exists public.project_roles_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	created_at timestamp,
-	created_by int,
-	name varchar(255),
-	org_id int,
-	project_role_id int
 );
 
 create table if not exists public.project_role_grants_data (
@@ -732,18 +520,6 @@ create table if not exists public.project_role_grants_data (
 	foreign key (project_role_id) references project_roles(id)
 );
 
-create table if not exists public.project_role_grants_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-	access_level access_level,
-	column_name varchar(32),
-	created_at timestamp,
-	created_by int,
-	project_role_id int,
-	table_name table_name
-);
-
 create table if not exists public.project_member_roles_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
@@ -757,18 +533,6 @@ create table if not exists public.project_member_roles_data (
 	foreign key (project_id) references projects(id),
 	foreign key (project_role_id) references project_roles(id)
 );
-
-create table if not exists public.project_member_roles_history (
-	_history_id serial primary key,
-	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
-	id int,
-    person_id int,
-    project_id int,
-	project_role_id int,
-	created_at timestamp,
-	created_by int
-);
-
 
 -- AUTHENTICATION ------------------------------------------------------------
 
