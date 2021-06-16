@@ -1,3 +1,4 @@
+-- trigger function that runs when record is deleted from sys_role_memberships table.
 create or replace function delete_security_on_roles_fn()
 returns trigger
 language PLPGSQL
@@ -12,9 +13,11 @@ rec1 record;
 begin
     p_role_id := old.sys_role_id;
     p_person_id := old.sys_person_id; 
+
+    -- update every table the person had access to 
+
     for rec1 in (select * from sys_role_grants where sys_role_id = p_role_id) loop
-        -- the security_grant function except no looping over all persons
-        select get_access_level(p_person_id,rec1.table_name, rec1.column_name) into new_access_level;
+        select get_new_access_level(p_person_id,rec1.table_name, rec1.column_name) into new_access_level;
         security_column_name := '_' || rec1.column_name;
         security_table_name := rec1.table_name || '_security';
         if new_access_level is null then 
