@@ -1,5 +1,3 @@
---  for security tables we need to get primary key 
-
 create or replace function create_security_history_tables()
 returns void
 language plpgsql
@@ -11,7 +9,7 @@ declare
     p_table_name text; 
     history_table_name text;
     security_table_name text;
-
+	security_table_column text;
 begin
     for rec1 in (SELECT table_name
 	FROM information_schema.tables
@@ -29,18 +27,29 @@ begin
         execute format('drop table if exists '|| security_table_name || ' cascade ');
         execute format('drop table if exists '|| history_table_name || ' cascade ');
 
-        -- HISTORY TABLE CREATION
+        p_table_name := quote_ident(rec1.table_name);
 
-        execute format('create table if not exists '|| history.table_name || ' ( _history_id serial primary key, 
+        -- HISTORY TABLE CREATION
+        execute format('create table if not exists '|| history_table_name || ' ( _history_id serial primary key, 
         _history_created_at timestamp not null default CURRENT_TIMESTAMP)'); 
 
-        for rec2 in (select column_name,data_type from information_schema.columns 
-        where table_name = rec1.table_name) loop 
-            execute format('alter table ' || history_table_name || ' add column ' || column_name || 
-            data_type);
-        end loop;
+        -- SECURITY TABLE CREATION
+        execute format('create table if not exists '|| security_table_name || ' ( __person_id int not null, __id int not null, foreign key (__id) references ' || p_table_name || '(id))' );
 
+
+        -- UPDATE BOTH SECURITY AND HISTORY TABLE 
+         for rec2 in (select column_name,data_type from information_schema.columns
+        where table_name = p_table_name) loop
+		raise info 'col-name: % | data-type: %', rec2.column_name, rec2.data_type;
+            execute format('alter table ' || history_table_name || ' add column ' || rec2.column_name || ' ' ||
+            rec2.data_type);
+			security_table_column := '_' || rec2.column_name;
+            execute format('alter table '|| security_table_name || ' add column '|| security_table_column || ' access_level');
+        end loop;
 
 	END loop;
 	raise info 'DONE';
 end; $$
+
+
+select create_security_history_tables();
