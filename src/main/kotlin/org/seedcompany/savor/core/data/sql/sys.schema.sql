@@ -41,7 +41,7 @@ END; $$;
 create table if not exists public.global_roles (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(255) not null,
 	org_id int,
 	unique (org_id, name)
@@ -54,7 +54,7 @@ create table if not exists public.global_roles_history (
 	_history_created_at timestamp not null default CURRENT_TIMESTAMP,
 	id int,
 	created_at timestamp,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(255),
 	org_id int
 );
@@ -121,7 +121,7 @@ create table if not exists public.global_role_grants (
 	access_level access_level not null,
 	column_name varchar(32) not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	global_role_id int not null,
 	table_name table_name not null,
 	unique (global_role_id, table_name, column_name, access_level),
@@ -145,7 +145,7 @@ create table if not exists public.global_role_memberships (
     id serial primary key,
 	global_role_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	person_id int,
 --	foreign key (created_by) references public.people(id),
 	foreign key (global_role_id) references global_roles(id)
@@ -181,7 +181,7 @@ create table if not exists public.scripture_references (
     chapter_start int,
     chapter_end int,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int not null,
+    created_by int not null default 0,
     verse_start int,
     verse_end int,
     unique (book_start, book_end, chapter_start, chapter_end, verse_start, verse_end)
@@ -205,7 +205,7 @@ END; $$;
 create table if not exists public.locations (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(255) unique not null,
 	sensitivity sensitivity not null default 'High',
 	type location_type not null
@@ -345,7 +345,7 @@ create table if not exists public.people (
 	reference_count serial,
     about text,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int, -- don't make not null!
+    created_by int default 0, -- don't make not null!
     phone varchar(32),
 	picture varchar(255),
     primary_org_id int,
@@ -455,7 +455,7 @@ create table if not exists public.education_entries_history (
 create table if not exists public.education_by_person (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
     education_id int not null,
     graduation_year int,
     person_id int not null,
@@ -480,7 +480,7 @@ create table if not exists public.education_by_person_history (
 create table if not exists public.organizations (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(255) unique not null,
 	sensitivity sensitivity default 'High',
 	primary_location_id int,
@@ -535,7 +535,7 @@ create table if not exists public.organization_grants(
     id serial primary key,
     access_level access_level not null,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int not null,
+    created_by int not null default 0,
     column_name varchar(32) not null,
     org_id int not null,
     table_name table_name not null,
@@ -547,7 +547,7 @@ create table if not exists public.organization_grants(
 create table if not exists public.organization_memberships(
     id serial primary key,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int not null,
+    created_by int not null default 0,
     org_id int not null,
     person_id int not null,
     foreign key (created_by) references public.people(id),
@@ -570,7 +570,7 @@ create table if not exists public.people_to_org_relationships (
 	org_id int,
 	person_id int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	foreign key (created_by) references public.people(id),
 	foreign key (org_id) references organizations(id),
 	foreign key (person_id) references people(id)
@@ -589,7 +589,7 @@ create table if not exists public.people_to_org_relationships_history (
 create table if not exists public.people_to_org_relationship_type (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
     begin_at timestamp not null,
 	end_at timestamp,
     people_to_org_id int,
@@ -619,7 +619,7 @@ create table if not exists public.users(
 	email varchar(255) unique not null,
 	password varchar(255) not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	foreign key (created_by) references public.people(id),
 	foreign key (person_id) references public.people(id),
 	foreign key (owning_org_id) references public.organizations(id)
@@ -652,7 +652,7 @@ $$;
 create table if not exists public.projects (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(32) not null,
 	primary_org_id int,
 	primary_location_id int,
@@ -678,7 +678,7 @@ create table if not exists public.projects_history (
 create table if not exists public.project_memberships (
     id serial primary key,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int not null,
+    created_by int not null default 0,
     person_id int not null,
     project_id int not null,
     foreign key (created_by) references public.people(id),
@@ -699,7 +699,7 @@ create table if not exists public.project_members_history (
 create table if not exists public.project_roles (
 	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	name varchar(255) not null,
 	org_id int,
 	unique (org_id, name),
@@ -723,7 +723,7 @@ create table if not exists public.project_role_grants (
 	access_level access_level not null,
 	column_name varchar(32) not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
 	project_role_id int not null,
 	table_name table_name not null,
 	unique (project_role_id, table_name, column_name, access_level),
@@ -746,7 +746,7 @@ create table if not exists public.project_role_grants_history (
 create table if not exists public.project_member_roles (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	created_by int not null,
+	created_by int not null default 0,
     person_id int not null,
     project_id int not null,
 	project_role_id int,

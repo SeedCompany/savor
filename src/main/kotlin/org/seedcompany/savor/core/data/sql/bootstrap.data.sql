@@ -1,13 +1,16 @@
 -- bootstrap.data.sql
 
+-- ensure we have person 0 to use as a default creator
+insert into public.people("id") values (0) on conflict do nothing;
+
 -- SYS LOCATIONS
-insert into sys_locations("name", "sensitivity", "type") values ('USA', 'Low', 'Country') on conflict do nothing;
-insert into sys_locations("name", "sensitivity", "type") values ('Arlington', 'High', 'City') on conflict do nothing;
+insert into locations("name", "sensitivity", "type") values ('USA', 'Low', 'Country') on conflict do nothing;
+insert into locations("name", "sensitivity", "type") values ('Arlington', 'High', 'City') on conflict do nothing;
 
 -- SYS ORGANIZATIONS
-insert into sys_organizations ("name") values ('Seed Company') on conflict do nothing;
-insert into sys_organizations ("name") values ('SIL') on conflict  do nothing;
-insert into sys_organizations ("name") values ('Wycliffe USA') on conflict do nothing;
+insert into organizations ("name") values ('Seed Company') on conflict do nothing;
+insert into organizations ("name") values ('SIL') on conflict  do nothing;
+insert into organizations ("name") values ('Wycliffe USA') on conflict do nothing;
 
 -- SYS USERS
 select * from sys_register('devops@tsco.org', 'asdf', 'Seed Company');
@@ -25,10 +28,10 @@ select * from sys_create_role('Regional Director', 'Seed Company');
 select * from sys_create_role('Consultant', 'Seed Company');
 
 -- SYS ROLE GRANTS
-select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_people', 'public_first_name', 'Read');
-select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'name', 'Read');
-select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'created_at', 'Read');
-select * from sys_add_role_grant('Admin', 'Seed Company', 'sys_locations', 'sensitivity', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'public.people', 'public_first_name', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'public.locations', 'name', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'public.locations', 'created_at', 'Read');
+select * from sys_add_role_grant('Admin', 'Seed Company', 'public.locations', 'sensitivity', 'Read');
 
 -- ROLE MEMBERSHIPS
 select * from sys_add_role_member('Admin', 'Seed Company', 'michael_marshall@tsco.org');

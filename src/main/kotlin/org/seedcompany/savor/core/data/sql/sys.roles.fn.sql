@@ -10,18 +10,18 @@ declare
     vSysRoleId INT;
     vOrgId INT;
 begin
-    SELECT sys_org_id
-    FROM sys_organizations
+    SELECT id
+    FROM public.organizations
     INTO vOrgId
-    WHERE sys_organizations.name = pOrgName;
+    WHERE organizations.name = pOrgName;
     IF FOUND THEN
-        SELECT sys_role_id
-        FROM sys_roles
+        SELECT id
+        FROM public.global_roles
         INTO vSysRoleId
-        WHERE sys_roles.sys_org_id = vOrgId
-            AND sys_roles.name = pRoleName;
+        WHERE global_roles.org_id = vOrgId
+            AND global_roles.name = pRoleName;
         IF NOT FOUND THEN
-            INSERT INTO sys_roles("sys_org_id", "name")
+            INSERT INTO public.global_roles("org_id", "name")
             VALUES (vOrgId, pRoleName);
             vResponseCode := 0;
         ELSE
@@ -49,26 +49,26 @@ declare
     vSysRoleId2 INT;
     vOrgId INT;
 begin
-    SELECT sys_org_id
-    FROM sys_organizations
+    SELECT id
+    FROM public.organizations
     INTO vOrgId
-    WHERE sys_organizations.name = pOrgName;
+    WHERE organizations.name = pOrgName;
     IF FOUND THEN
-        SELECT sys_role_id
-        FROM sys_roles
+        SELECT id
+        FROM public.global_roles
         INTO vSysRoleId
-        WHERE sys_roles.sys_org_id = vOrgId
-            AND sys_roles.name = pRoleName;
+        WHERE global_roles.org_id = vOrgId
+            AND global_roles.name = pRoleName;
         IF FOUND THEN
-            SELECT sys_role_id
-            FROM sys_role_grants
+            SELECT global_role_id
+            FROM global_role_grants
             INTO vSysRoleId2
-            WHERE sys_role_grants.sys_role_id = vSysRoleId
-                AND sys_role_grants.table_name = pTableName
-                AND sys_role_grants.column_name = pColumnName
-                AND sys_role_grants.access_level = pAccessLevel;
+            WHERE global_role_grants.global_role_id = vSysRoleId
+                AND global_role_grants.table_name = pTableName
+                AND global_role_grants.column_name = pColumnName
+                AND global_role_grants.access_level = pAccessLevel;
             IF NOT FOUND THEN
-                INSERT INTO sys_role_grants("sys_role_id", "table_name", "column_name", "access_level")
+                INSERT INTO global_role_grants("global_role_id", "table_name", "column_name", "access_level")
                 VALUES (vSysRoleId, pTableName, pColumnName, pAccessLevel);
                 vResponseCode := 0;
             ELSE
@@ -97,23 +97,23 @@ declare
     vOrgId INT;
     vSysPersonId INT;
 begin
-    SELECT sys_org_id
-    FROM sys_organizations
+    SELECT id
+    FROM public.organizations
     INTO vOrgId
-    WHERE sys_organizations.name = pOrgName;
+    WHERE organizations.name = pOrgName;
     IF FOUND THEN
-        SELECT sys_role_id
-        FROM sys_roles
+        SELECT id
+        FROM public.global_roles
         INTO vSysRoleId
-        WHERE sys_roles.sys_org_id = vOrgId
-            AND sys_roles.name = pRoleName;
+        WHERE global_roles.org_id = vOrgId
+            AND global_roles.name = pRoleName;
         IF FOUND THEN
-            select sys_person_id
-            from sys_users
+            select person_id
+            from public.users
             into vSysPersonId
-            where sys_users.email = pUserEmail;
+            where users.email = pUserEmail;
             if found then
-                INSERT INTO sys_role_memberships("sys_person_id", "sys_role_id")
+                INSERT INTO global_role_memberships("person_id", "global_role_id")
                 VALUES (vSysPersonId, vSysRoleId);
                 vResponseCode := 0;
             else

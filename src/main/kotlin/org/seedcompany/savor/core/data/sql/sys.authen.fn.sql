@@ -11,20 +11,20 @@ declare
     vSysPersonId INT;
     vOrgId INT;
 begin
-    SELECT sys_person_id
-    FROM sys_users
+    SELECT person_id
+    FROM public.users
     INTO vSysPersonId
-    WHERE sys_users.email = pEmail;
+    WHERE users.email = pEmail;
     IF NOT found THEN
-        SELECT sys_org_id
-        FROM sys_organizations
+        SELECT id
+        FROM public.organizations
         INTO vOrgId
-        WHERE sys_organizations.name = pOrgName;
+        WHERE organizations.name = pOrgName;
         IF found THEN
-            INSERT INTO sys_people VALUES (DEFAULT)
-            RETURNING sys_person_id
+            INSERT INTO public.people VALUES (DEFAULT)
+            RETURNING id
             INTO vSysPersonId;
-            INSERT INTO sys_users("sys_person_id", "email", "password", "owning_sys_org_id")
+            INSERT INTO public.users("person_id", "email", "password", "owning_org_id")
             VALUES (vSysPersonId, pEmail, pPassword, vOrgId);
             vResponseCode := 0;
         ELSE
@@ -46,16 +46,16 @@ language plpgsql
 as $$
 declare
     vResponseCode INT;
-    vRow sys_users%ROWTYPE;
+    vRow public.users%ROWTYPE;
     vId INT;
 begin
     SELECT *
-    FROM sys_users
+    FROM public.users
     INTO vRow
-    WHERE sys_users.email = pEmail AND sys_users.password = pPassword;
+    WHERE users.email = pEmail AND users.password = pPassword;
     IF found THEN
-        INSERT INTO sys_tokens("token", "sys_person_id")
-        VALUES (pToken, vRow.sys_person_id);
+        INSERT INTO public.tokens("token", "person_id")
+        VALUES (pToken, vRow.person_id);
         vResponseCode := 0;
     ELSE
         vResponseCode := 2;
