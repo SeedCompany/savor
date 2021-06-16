@@ -18,7 +18,9 @@ create table if not exists sc_funding_account_history (
 	created_at timestamp,
 	name varchar(32)
 );
-
+https://wiki.seedconnect.org/admin/attachmentstoragesetup.action
+admin/attachmentstoragesetup.action
+/var/atlassian/application-data/confluence/attachments/ver003
 -- LOCATION TABLES ----------------------------------------------------------
 
 create table if not exists sc_field_zone (

@@ -232,7 +232,8 @@ create table if not exists public.locations_security (
 	_name access_level,
 	_sensitivity access_level,
 	_type access_level,
-	foreign key (__id) references public.locations(id)
+	foreign key (__id) references public.locations(id),
+--	foreign key (__person_id) references public.people(id)
 );
 
 create materialized view if not exists public.locations_secure_view as
