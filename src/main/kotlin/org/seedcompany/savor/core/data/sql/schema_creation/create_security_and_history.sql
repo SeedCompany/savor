@@ -1,3 +1,5 @@
+-- TODO: convert locations_data to public.locations_data 
+
 create or replace function create_security_history_tables()
 returns void
 language plpgsql
@@ -11,23 +13,25 @@ declare
     security_table_name text;
 	security_table_column text;
 begin
-    for rec1 in (SELECT table_name
-	FROM information_schema.tables
-	WHERE table_schema = 'public' and table_name like '%_data'
-	ORDER BY table_name) loop 
+    -- FINDING ALL TABLES THAT NEED A HISTORY AND SECURITY TABLE AND LOOPING OVER THEM
+    for rec1 in (select table_name
+	from information_schema.tables
+	where table_schema = 'public' and table_name like '%_data'
+	order by table_name) loop 
 
-        -- FINDING ALL TABLES THAT NEED A HISTORY AND SECURITY TABLE AND LOOPING OVER THEM
         p_table_name_literal := replace(rec1.table_name, '_data', '');
-        p_table_name := quote_ident(p_table_name_literal);
+        -- locations_data -> locations
         security_table_name := quote_ident(p_table_name_literal||'_security');
+        -- "locations_security"
         history_table_name := quote_ident(p_table_name_literal||'_history');
-        raise info '%', p_table_name;
+        -- "locations_history"
 
         -- DROP HISTORY AND SECURITY TABLES IF THEY EXIST
         execute format('drop table if exists '|| security_table_name || ' cascade ');
         execute format('drop table if exists '|| history_table_name || ' cascade ');
 
         p_table_name := quote_ident(rec1.table_name);
+        -- "locations_data"
 
         -- HISTORY TABLE CREATION
         execute format('create table if not exists '|| history_table_name || ' ( _history_id serial primary key, 
@@ -47,9 +51,10 @@ begin
             execute format('alter table '|| security_table_name || ' add column '|| security_table_column || ' access_level');
         end loop;
 
-	END loop;
+	end loop;
 	raise info 'DONE';
 end; $$
 
 
 select create_security_history_tables();
+
