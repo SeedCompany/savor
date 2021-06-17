@@ -1,4 +1,4 @@
--- new.id
+-- trigger function on insert for public.people
 create or replace function insert_person_to_security(p_schema_name text)
 returns void
 language plpgsql
