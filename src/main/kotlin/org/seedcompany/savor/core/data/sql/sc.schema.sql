@@ -296,6 +296,7 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc.projects_data (
+    id serial primary key,
 	project_sys_group_id int not null,
 	sc_change_to_plan_id int not null default 0,
 	sc_internal_project_id varchar(255) not null,
@@ -316,7 +317,7 @@ create table if not exists sc.projects_data (
 	status sc_enum_project_status,
 	status_changed_at timestamp,
 	step sc_enum_project_step,
-	primary key (project_sys_group_id, sc_change_to_plan_id),
+	unique (project_sys_group_id, sc_change_to_plan_id),
 --    primary key (project_sys_group_id),
 	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
 	foreign key (root_directory_sc_directory_id) references sc_directories(sc_directory_id),

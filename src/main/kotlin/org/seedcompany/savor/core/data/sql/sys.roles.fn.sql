@@ -61,14 +61,14 @@ begin
             AND global_roles_data.name = pRoleName;
         IF FOUND THEN
             SELECT global_role_id
-            FROM global_role_grants_data
+            FROM global_role_column_grants_data
             INTO vSysRoleId2
-            WHERE global_role_grants_data.global_role_id = vSysRoleId
-                AND global_role_grants_data.table_name = pTableName
-                AND global_role_grants_data.column_name = pColumnName
-                AND global_role_grants_data.access_level = pAccessLevel;
+            WHERE global_role_column_grants_data.global_role_id = vSysRoleId
+                AND global_role_column_grants_data.table_name = pTableName
+                AND global_role_column_grants_data.column_name = pColumnName
+                AND global_role_column_grants_data.access_level = pAccessLevel;
             IF NOT FOUND THEN
-                INSERT INTO global_role_grants_data("global_role_id", "table_name", "column_name", "access_level")
+                INSERT INTO global_role_column_grants_data("global_role_id", "table_name", "column_name", "access_level")
                 VALUES (vSysRoleId, pTableName, pColumnName, pAccessLevel);
                 vResponseCode := 0;
             ELSE

@@ -45,8 +45,8 @@ create table if not exists public.global_roles_data (
 	name varchar(255) not null,
 	org_id int,
 	unique (org_id, name)
---	foreign key (created_by) references public.people_data(id),
---	foreign key (org_id) references public.organizations_data(id)
+--	foreign key (created_by) references public.people_data(id), -- fk added later
+--	foreign key (org_id) references public.organizations_data(id) -- fk added later
 );
 
 DO $$ BEGIN
@@ -62,7 +62,7 @@ DO $$ BEGIN
 		'public.people_to_org_relationships_data',
 		'public.people_to_org_relationship_type_data',
 		'public.global_roles_data',
-		'public.global_role_grants_data',
+		'public.global_role_column_grants_data',
 		'public.global_role_memberships_data',
 		'public.users_data',
 		'public.projects_data',
@@ -106,7 +106,16 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.global_role_grants_data (
+DO $$ BEGIN
+    create type public.table_permission as enum (
+		'Create',
+		'Delete'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+create table if not exists public.global_role_column_grants_data (
 	id serial primary key,
 	access_level access_level not null,
 	column_name varchar(32) not null,
@@ -115,8 +124,20 @@ create table if not exists public.global_role_grants_data (
 	global_role_id int not null,
 	table_name table_name not null,
 	unique (global_role_id, table_name, column_name, access_level),
---	foreign key (created_by_id) references public.people_data(id),
+--	foreign key (created_by) references public.people_data(id), -- fk added later
 	foreign key (global_role_id) references public.global_roles_data(id)
+);
+
+create table if not exists public.global_role_table_permissions_data(
+    id serial primary key,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    created_by int not null default 0,
+    global_role_id int not null,
+    table_name varchar(32) not null,
+    table_permission table_permission not null,
+    unique (global_role_id, table_name, table_permission),
+--	foreign key (created_by) references public.people_data(id), -- fk added later
+    foreign key (global_role_id) references public.global_roles_data(id)
 );
 
 create table if not exists public.global_role_memberships_data (
@@ -125,7 +146,7 @@ create table if not exists public.global_role_memberships_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	person_id int,
---	foreign key (created_by) references public.people_data(id),
+--	foreign key (created_by) references public.people_data(id), -- fk added later
 	foreign key (global_role_id) references global_roles_data(id)
 );
 
@@ -153,7 +174,7 @@ create table if not exists public.scripture_references_data (
     verse_start int,
     verse_end int,
     unique (book_start, book_end, chapter_start, chapter_end, verse_start, verse_end)
---    foreign key (created_by) references public.people_data(id)
+--    foreign key (created_by) references public.people_data(id) -- fk added later
 );
 
 -- LOCATION -----------------------------------------------------------------
@@ -177,16 +198,8 @@ create table if not exists public.locations_data (
 	name varchar(255) unique not null,
 	sensitivity sensitivity not null default 'High',
 	type location_type not null
---	foreign key (created_by) references public.people_data(id)
+--	foreign key (created_by) references public.people_data(id) -- fk added later
 );
-
---REFRESH MATERIALIZED VIEW public.locations_secure_view;
-
---CREATE UNIQUE INDEX IF NOT EXISTS public_locations_secure_view_uniq
---    ON locations_secure_view (__person_id, __id);
---
---CREATE INDEX IF NOT EXISTS public_locations_secure_view_lookup
---    ON locations_secure_view (__person_id);
 
 -- LANGUAGE -----------------------------------------------------------------
 
@@ -251,7 +264,7 @@ create table if not exists public.people_data (
     time_zone varchar(32),
     title varchar(255),
     foreign key (created_by) references public.people_data(id),
---    foreign key (primary_org_id) references public.organizations_data(id),
+--    foreign key (primary_org_id) references public.organizations_data(id), -- fk added later
     foreign key (primary_location_id) references public.locations_data(id)
 );
 
@@ -261,7 +274,11 @@ ALTER TABLE public.global_roles_data ADD CONSTRAINT public_global_roles_created_
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_grants_created_by_fk') THEN
-ALTER TABLE public.global_role_grants_data ADD CONSTRAINT public_global_role_grants_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.global_role_column_grants_data ADD CONSTRAINT public_global_role_grants_created_by_fk foreign key (created_by) references people_data(id);
+END IF; END; $$;
+
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_table_permissions_created_by_fk') THEN
+ALTER TABLE public.global_role_table_permissions_data ADD CONSTRAINT public_global_role_table_permissions_created_by_fk foreign key (created_by) references people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_memberships_person_id_fk') THEN
