@@ -42,8 +42,11 @@ begin
 
 
         -- UPDATE BOTH SECURITY AND HISTORY TABLE 
-         for rec2 in (select column_name,data_type from information_schema.columns
-        where table_schema = p_schema_name and table_name = p_table_name) loop
+         for rec2 in (select column_name,case 
+        			  when (data_type = 'USER-DEFINED') then udt_name 
+        			else data_type 
+    				end as data_type from information_schema.columns
+        			where table_schema = p_schema_name and table_name = p_table_name) loop
 		raise info 'col-name: % | data-type: %', rec2.column_name, rec2.data_type;
 
             select column_name from information_schema.columns into existing_column where table_schema = p_schema_name
