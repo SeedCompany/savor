@@ -60,21 +60,21 @@ create table if not exists sc.organizations_data (
 	address varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-	internal_id varchar(32) unique not null,
+	internal varchar(32) unique not null,
 	foreign key (created_by) references public.people_data(id),
 	foreign key (id) references public.organizations_data(id)
 );
 
 create table if not exists sc.organization_locations_data(
     id serial primary key,
-	org_id int not null,
-	location_id int not null,
+	org int not null,
+	location int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-	unique (org_id, location_id),
+	unique (org, location),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (org_id) references public.organizations_data(id),
-	foreign key (location_id) references public.locations_data(id)
+	foreign key (org) references public.organizations_data(id),
+	foreign key (location) references public.locations_data(id)
 );
 
 DO $$ BEGIN
@@ -145,26 +145,26 @@ create table if not exists sc.languages_data (
 
 create table if not exists sc.language_locations_data (
     id serial primary key,
-	ethnologue_id int not null,
-	location_id int not null,
+	ethnologue int not null,
+	location int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-	unique (ethnologue_id, location_id),
+	unique (ethnologue, location),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (ethnologue_id) references sil.table_of_languages_data(id)
+	foreign key (ethnologue) references sil.table_of_languages_data(id)
 	-- todo
 );
 
 create table if not exists sc.language_goals_data (
     id serial primary key,
-    ethnologue_id int not null,
-	goal_id int not null,
+    ethnologue int not null,
+	goal int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-	unique (ethnologue_id, goal_id),
+	unique (ethnologue, goal),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (ethnologue_id) references sil.table_of_languages_data(id),
-	foreign key (goal_id) references sc.language_goal_definitions_data(id)
+	foreign key (ethnologue) references sil.table_of_languages_data(id),
+	foreign key (goal) references sc.language_goal_definitions_data(id)
 	-- todo
 );
 
@@ -184,7 +184,7 @@ create table if not exists sc.known_languages_by_person_data (
 
 create table if not exists sc.people_data (
     id int primary key,
-    internal_id varchar(32) unique,
+    internal varchar(32) unique,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
 	skills varchar(32)[],
@@ -219,10 +219,10 @@ create table if not exists sc.files_data (
     id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-    directory_id int not null,
+    directory int not null,
 	name varchar(255),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (directory_id) references sc.directories_data(id),
+	foreign key (directory) references sc.directories_data(id),
 );
 
 create table if not exists sc.file_versions_data (
@@ -232,11 +232,11 @@ create table if not exists sc.file_versions_data (
     created_by int not null,
     mime_type mime_type not null,
     name varchar(255) not null,
-    file_id int not null,
+    file int not null,
     file_url varchar(255) not null,
     file_size int, -- bytes
     foreign key (created_by) references public.people_data(id),
-    foreign key (file_id) references sc.files_data(id)
+    foreign key (file) references sc.files_data(id)
 );
 
 -- PROJECT TABLES ----------------------------------------------------------
@@ -297,47 +297,47 @@ END; $$;
 
 create table if not exists sc.projects_data (
     id serial primary key,
-	project_sys_group_id int not null,
-	sc_change_to_plan_id int not null default 0,
-	sc_internal_project_id varchar(255) not null,
+	project_sys_group int not null,
+	sc_change_to_plan int not null default 0,
+	sc_internal_project varchar(255) not null,
 	active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	department_id varchar(255),
+	department varchar(255),
 	estimated_submission timestamp,
-	field_region_sys_location_id int,
+	field_region_sys_location int,
 	initial_mou_end timestamp,
-	marketing_sys_location_id int,
+	marketing_sys_location int,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	mou_start timestamp,
 	mou_end timestamp,
 	name varchar(255) unique not null,
-	owning_organization_sys_group_id int,
-	primary_sys_location_id int,
-	root_directory_sc_directory_id int,
+	owning_organization_sys_group int,
+	primary_sys_location int,
+	root_directory_sc_directory int,
 	status sc_enum_project_status,
 	status_changed_at timestamp,
 	step sc_enum_project_step,
-	unique (project_sys_group_id, sc_change_to_plan_id),
---    primary key (project_sys_group_id),
-	foreign key (project_sys_group_id) references sys_groups(sys_group_id),
-	foreign key (root_directory_sc_directory_id) references sc_directories(sc_directory_id),
-	foreign key (field_region_sys_location_id) references sys_locations(sys_location_id)
---	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	unique (project_sys_group, sc_change_to_plan),
+--    primary key (project_sys_group),
+	foreign key (project_sys_group) references sys_groups(sys_group),
+	foreign key (root_directory_sc_directory) references sc_directories(sc_directory),
+	foreign key (field_region_sys_location) references sys_locations(sys_location)
+--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 create table if not exists sc_partnerships (
-    sys_project_id int not null,
-    partner_sys_org_id int not null,
---    sc_change_to_plan_id int not null default 0,
+    sys_project int not null,
+    partner_sys_org int not null,
+--    sc_change_to_plan int not null default 0,
     active bool,
-    agreement_sc_file_version_id int,
+    agreement_sc_file_version int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_project_id, partner_sys_org_id),
---	sc_change_to_plan_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (partner_sys_org_id) references sys_organizations(sys_org_id),
-	--	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
-	foreign key (agreement_sc_file_version_id) references sc_file_versions(sc_file_version_id)
+	primary key (sys_project, partner_sys_org),
+--	sc_change_to_plan),
+	foreign key (sys_project) references sys_projects(sys_project),
+	foreign key (partner_sys_org) references sys_organizations(sys_org),
+	--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
+	foreign key (agreement_sc_file_version) references sc_file_versions(sc_file_version)
 );
 
 -- PROJECT BUDGETS
@@ -354,43 +354,43 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc_budgets (
-    sc_budget_id serial primary key,
-    sys_project_id int not null,
+    sc_budget serial primary key,
+    sys_project int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
     status sc_budget_status,
-    universal_template_sys_file_id int,
+    universal_template_sys_file int,
     universal_template_file_url varchar(255),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (universal_template_sys_file_id) references sc_file_versions(sc_file_version_id)
+	foreign key (sys_project) references sys_projects(sys_project),
+	foreign key (universal_template_sys_file) references sc_file_versions(sc_file_version)
 );
 
 create table if not exists sc_budget_records (
-    sc_budget_id int not null,
---    sc_change_to_plan_id int not null default 0,
+    sc_budget int not null,
+--    sc_change_to_plan int not null default 0,
     active bool,
     amount decimal,
     fiscal_year int,
-    partnership_sys_org_id int,
+    partnership_sys_org int,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sc_budget_id),
---	sc_change_to_plan_id),
-	foreign key (sc_budget_id) references sc_budgets(sc_budget_id)
---	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	primary key (sc_budget),
+--	sc_change_to_plan),
+	foreign key (sc_budget) references sc_budgets(sc_budget)
+--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 -- PROJECT LOCATION
 
 create table if not exists sc_project_locations (
-    sys_project_id int not null,
-    sys_location_id int not null,
---    sc_change_to_plan_id int not null default 0,
+    sys_project int not null,
+    sys_location int not null,
+--    sc_change_to_plan int not null default 0,
     active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_project_id, sys_location_id),
---	sc_change_to_plan_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (sys_location_id) references sys_locations(sys_location_id)
---	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	primary key (sys_project, sys_location),
+--	sc_change_to_plan),
+	foreign key (sys_project) references sys_projects(sys_project),
+	foreign key (sys_location) references sys_locations(sys_location)
+--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 -- LANGUAGE ENGAGEMENTS
@@ -418,9 +418,9 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc_language_engagements (
-	sys_project_id int not null,
-	sil_ethnologue_id int not null,
---	sc_change_to_plan_id int not null default 0,
+	sys_project int not null,
+	sil_ethnologue int not null,
+--	sc_change_to_plan int not null default 0,
     active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	communications_complete_date timestamp,
@@ -433,20 +433,20 @@ create table if not exists sc_language_engagements (
 	is_luke_partnership bool,
 	is_sent_printing bool,
 	last_reactivated_at timestamp,
-	paratext_registry_id varchar(32),
+	paratext_registry varchar(32),
 	pnp varchar(255),
-	pnp_sc_file_version_id int,
+	pnp_sc_file_version int,
 	product_engagement_tag sc_project_engagement_tag,
 	start_date timestamp,
 	start_date_override timestamp,
 	status sc_engagement_status,
 	updated_at timestamp,
-	primary key (sys_project_id, sil_ethnologue_id),
---	sc_change_to_plan_id),
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id),
-	foreign key (sys_project_id) references sys_projects(sys_project_id),
-	foreign key (pnp_sc_file_version_id) references sc_file_versions(sc_file_version_id)
---	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	primary key (sys_project, sil_ethnologue),
+--	sc_change_to_plan),
+	foreign key (sil_ethnologue) references sil_table_of_languages(sil_ethnologue),
+	foreign key (sys_project) references sys_projects(sys_project),
+	foreign key (pnp_sc_file_version) references sc_file_versions(sc_file_version)
+--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 -- PRODUCTS
@@ -498,8 +498,8 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc_products (
-    sc_product_id serial unique not null,
---    sc_change_to_plan_id int not null default 0,
+    sc_product serial unique not null,
+--    sc_change_to_plan int not null default 0,
     active bool,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     mediums sc_product_mediums[],
@@ -507,22 +507,22 @@ create table if not exists sc_products (
     purposes sc_product_purposes[],
     type sc_product_type,
     name varchar(64),
-    primary key (sc_product_id)
---    sc_change_to_plan_id)
---    foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+    primary key (sc_product)
+--    sc_change_to_plan)
+--    foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 create table if not exists sc_product_scripture_references (
-    sc_product_id int not null,
-    sys_scripture_reference_id int not null,
---    sc_change_to_plan_id int not null default 0,
+    sc_product int not null,
+    sys_scripture_reference int not null,
+--    sc_change_to_plan int not null default 0,
     active bool,
     created_at timestamp not null default CURRENT_TIMESTAMP,
-    primary key (sc_product_id, sys_scripture_reference_id),
---    sc_change_to_plan_id),
-    foreign key (sc_product_id) references sc_products(sc_product_id),
-    foreign key (sys_scripture_reference_id) references sys_scripture_references(sys_scripture_reference_id)
---    foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+    primary key (sc_product, sys_scripture_reference),
+--    sc_change_to_plan),
+    foreign key (sc_product) references sc_products(sc_product),
+    foreign key (sys_scripture_reference) references sys_scripture_references(sys_scripture_reference)
+--    foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 -- INTERNSHIP ENGAGEMENTS
@@ -550,51 +550,51 @@ DO $$ BEGIN
 END; $$;
 
 create table if not exists sc_internship_engagements (
-	project_sys_org_id int not null,
-	sil_ethnologue_id int not null,
---	sc_change_to_plan_id int not null default 0,
+	project_sys_org int not null,
+	sil_ethnologue int not null,
+--	sc_change_to_plan int not null default 0,
     active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	communications_complete_date timestamp,
 	complete_date timestamp,
-	country_of_origin_sys_location_id int,
+	country_of_origin_sys_location int,
 	disbursement_complete_date timestamp,
 	end_date timestamp,
 	end_date_override timestamp,
-	growth_plan_sc_file_version_id int,
+	growth_plan_sc_file_version int,
 	initial_end_date timestamp,
-	intern_sys_person_id int,
+	intern_sys_person int,
 	last_reactivated_at timestamp,
-	mentor_sys_person_id int,
+	mentor_sys_person int,
 	methodology sc_internship_methodology,
-	paratext_registry_id varchar(32),
+	paratext_registry varchar(32),
 	position sc_internship_position,
 	start_date timestamp,
 	start_date_override timestamp,
 	status sc_engagement_status,
 	updated_at timestamp,
-	primary key (project_sys_org_id, sil_ethnologue_id),
---	sc_change_to_plan_id),
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id),
-	foreign key (project_sys_org_id) references sys_organizations(sys_org_id),
-	foreign key (country_of_origin_sys_location_id) references sys_locations(sys_location_id),
-	foreign key (growth_plan_sc_file_version_id) references sc_file_versions(sc_file_version_id),
-	foreign key (intern_sys_person_id) references sys_people(sys_person_id),
-	foreign key (mentor_sys_person_id) references sys_people(sys_person_id)
---	foreign key (sc_change_to_plan_id) references sc_change_to_plans(sc_change_to_plan_id)
+	primary key (project_sys_org, sil_ethnologue),
+--	sc_change_to_plan),
+	foreign key (sil_ethnologue) references sil_table_of_languages(sil_ethnologue),
+	foreign key (project_sys_org) references sys_organizations(sys_org),
+	foreign key (country_of_origin_sys_location) references sys_locations(sys_location),
+	foreign key (growth_plan_sc_file_version) references sc_file_versions(sc_file_version),
+	foreign key (intern_sys_person) references sys_people(sys_person),
+	foreign key (mentor_sys_person) references sys_people(sys_person)
+--	foreign key (sc_change_to_plan) references sc_change_to_plans(sc_change_to_plan)
 );
 
 create table if not exists sc_ceremonies (
-    sc_ceremony_id serial primary key,
-    project_sys_org_id int not null,
-	sil_ethnologue_id int not null,
+    sc_ceremony serial primary key,
+    project_sys_org int not null,
+	sil_ethnologue int not null,
 	actual_date timestamp,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	estimated_date timestamp,
 	is_planned bool,
 	type varchar(255),
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id),
-    foreign key (project_sys_org_id) references sys_organizations(sys_org_id)
+	foreign key (sil_ethnologue) references sil_table_of_languages(sil_ethnologue),
+    foreign key (project_sys_org) references sys_organizations(sys_org)
 );
 
 -- CRM TABLES, WIP ------------------------------------------------------------------
@@ -628,96 +628,96 @@ END; $$;
 
 --
 --create table if not exists sc_org_to_org_rels (
---    from_sys_org_id varchar(32) not null,
---    to_sys_org_id varchar(32) not null,
+--    from_sys_org varchar(32) not null,
+--    to_sys_org varchar(32) not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (from_sys_org_id, to_sys_org_id),
---    foreign key (from_sys_org_id) references sc_organizations(sys_org_id),
---    foreign key (to_sys_org_id) references sc_organizations(sys_org_id)
+--    primary key (from_sys_org, to_sys_org),
+--    foreign key (from_sys_org) references sc_organizations(sys_org),
+--    foreign key (to_sys_org) references sc_organizations(sys_org)
 --);
 --
 --create table if not exists sc_partner_performance (
---    sc_internal_org_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--    primary key (sc_internal_org),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
 --
 --create table if not exists sc_partner_finances (
---    sc_internal_org_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--    primary key (sc_internal_org),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
 --
 --create table if not exists sc_partner_reporting (
---    sc_internal_org_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--    primary key (sc_internal_org),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
 --
 --create table if not exists sc_partner_translation_progress (
---    sc_internal_org_id varchar(32) not null,
---    sc_internal_project_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
+--    sc_internal_project varchar(32) not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id, sc_internal_project_id),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--    primary key (sc_internal_org, sc_internal_project),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
 --
 --create table if not exists sc_partner_notes (
---    sc_internal_org_id varchar(32) not null,
---    author_sys_person_id int not null,
+--    sc_internal_org varchar(32) not null,
+--    author_sys_person int not null,
 --    note_text text not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id, author_sys_person_id, created_at),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id),
---    foreign key (author_sys_person_id) references sys_people(sys_person_id)
+--    primary key (sc_internal_org, author_sys_person, created_at),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org),
+--    foreign key (author_sys_person) references sys_people(sys_person)
 --);
 --
 --create table if not exists sc_org_transitions (
---    sc_internal_org_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
 --    transition_type sc_org_transitions not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sc_internal_org_id),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--    primary key (sc_internal_org),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
 --
 --create table if not exists sc_roles (
---    sc_role_id serial primary key,
+--    sc_role serial primary key,
 --    name varchar(32) unique not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP
 --);
 --
 --create table if not exists sc_role_memberships (
---    sys_person_id int not null,
---    sc_role_id int not null,
+--    sys_person int not null,
+--    sc_role int not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sys_person_id, sc_role_id),
---    foreign key (sys_person_id) references sys_people(sys_person_id)
+--    primary key (sys_person, sc_role),
+--    foreign key (sys_person) references sys_people(sys_person)
 --);
 --
 --create table if not exists sc_person_to_person_rels (
---    from_sys_person_id int not null,
---    to_sys_person_id int not null,
+--    from_sys_person int not null,
+--    to_sys_person int not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (from_sys_person_id, to_sys_person_id),
---    foreign key (from_sys_person_id) references sys_people(sys_person_id),
---    foreign key (to_sys_person_id) references sys_people(sys_person_id)
+--    primary key (from_sys_person, to_sys_person),
+--    foreign key (from_sys_person) references sys_people(sys_person),
+--    foreign key (to_sys_person) references sys_people(sys_person)
 --);
 --
 --create table if not exists sys_people_transitions (
---    sys_person_id int not null,
+--    sys_person int not null,
 --    transition_type sc_people_transitions not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---    primary key (sys_person_id, transition_type),
---    foreign key (sys_person_id) references sys_people(sys_person_id)
+--    primary key (sys_person, transition_type),
+--    foreign key (sys_person) references sys_people(sys_person)
 --);
 --
 --create table if not exists sc_involvements (
---    sc_internal_org_id varchar(32) not null,
+--    sc_internal_org varchar(32) not null,
 --    type sc_involvements not null,
 --    created_at timestamp not null default CURRENT_TIMESTAMP,
---	primary key (sc_internal_org_id, type),
---    foreign key (sc_internal_org_id) references sc_organizations(sc_internal_org_id)
+--	primary key (sc_internal_org, type),
+--    foreign key (sc_internal_org) references sc_organizations(sc_internal_org)
 --);
