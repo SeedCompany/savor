@@ -1,67 +1,84 @@
 -- Seed Company Schema -------------------------------------------------------------
 
+create schema if not exists sc;
+
 -- ENUMs ----------------------------------------------------------
 
 
 -- ACCOUNTING TABLES --------------------------------------------------------
 
-create table if not exists sc_funding_account (
-	account_number varchar(32) not null primary key,
+create table if not exists sc.funding_account_data (
+    id serial primary key,
+	account_number varchar(32) unique not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	name varchar(32)
+	created_by int not null,
+	name varchar(32),
+	foreign key (created_by) references public.people_data(id)
 );
 
 -- LOCATION TABLES ----------------------------------------------------------
 
-create table if not exists sc_field_zone (
-	sc_field_zone_id serial primary key,
+create table if not exists sc.field_zone_data (
+	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	director_sys_person_id int,
+	created_by int not null,
+	director int,
 	name varchar(32) unique not null,
-	foreign key (director_sys_person_id) references sys_people(sys_person_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (director) references public.people_data(id)
 );
 
-create table if not exists sc_field_regions (
-	sc_field_region_id serial primary key,
+create table if not exists sc.field_regions_data (
+	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	director_sys_person_id int,
+	created_by int not null,
+	directory int,
 	name varchar(32) unique not null,
-	foreign key (director_sys_person_id) references sys_people(sys_person_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (director) references public.people_data(id)
 );
 
-create table if not exists sc_locations (
-	sys_location_id int primary key,
+create table if not exists sc.locations_data (
+	id int primary key not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	default_sc_field_region_id int,
-	funding_account_number varchar(32),
+	created_by int not null,
+	default_region int,
+	funding_account varchar(32),
 	iso_alpha_3 char(3),
 	name varchar(32) unique not null,
 	type location_type not null,
-	foreign key (sys_location_id) references sys_locations(sys_location_id),
-	foreign key (funding_account_number) references sc_funding_account(account_number)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (id) references public.locations_data(id),
+	foreign key (default_region) references sc.field_regions_data(id),
+	foreign key (funding_account) references sc.funding_account_data(account_number)
 );
 
 -- ORGANIZATION TABLES
 
-create table if not exists sc_organizations (
-	sys_org_id int primary key not null,
+create table if not exists sc.organizations_data (
+	id int primary key not null,
 	address varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	sc_internal_org_id varchar(32) unique not null,
-	foreign key (sys_org_id) references sys_organizations(sys_org_id)
+	created_by int not null,
+	internal_id varchar(32) unique not null,
+	foreign key (created_by) references public.people_data(id),
+	foreign key (id) references public.organizations_data(id)
 );
 
-create table if not exists sc_organization_locations(
-	sys_org_id int not null,
-	sys_location_id int not null,
+create table if not exists sc.organization_locations_data(
+    id serial primary key,
+	org_id int not null,
+	location_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sys_org_id, sys_location_id),
-	foreign key (sys_org_id) references sys_organizations(sys_org_id),
-	foreign key (sys_location_id) references sys_locations(sys_location_id)
+	created_by int not null,
+	unique (org_id, location_id),
+	foreign key (created_by) references public.people_data(id),
+	foreign key (org_id) references public.organizations_data(id),
+	foreign key (location_id) references public.locations_data(id)
 );
 
 DO $$ BEGIN
-    create type sc_financial_reporting_types as enum (
+    create type sc.financial_reporting_types as enum (
 		'A',
 		'B',
 		'C'
@@ -72,7 +89,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_partner_types as enum (
+    create type sc.partner_types as enum (
 		'A',
 		'B',
 		'C'
@@ -81,35 +98,40 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists sc_partners (
-	sys_org_id int primary key,
+create table if not exists sc.partners_data (
+	id int primary key,
 	active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
+	created_by int not null,
 	financial_reporting_types sc_financial_reporting_types[],
 	is_global_innovations_client bool,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	pmc_entity_code varchar(32),
-	point_of_contact_sys_person_id int,
-	foreign key (point_of_contact_sys_person_id) references sys_people(sys_person_id),
+	point_of_contact int,
 	types sc_partner_types[],
-	foreign key (sys_org_id) references sys_organizations(sys_org_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (point_of_contact) references public.people_data(id),
+	foreign key (id) references public.organizations_data(id)
 );
 
 -- LANGUAGE TABLES ----------------------------------------------------------
 
-create table if not exists sc_language_goal_definitions (
-	sc_goal_id serial primary key,
+create table if not exists sc.language_goal_definitions_data (
+	id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP
+	created_by int not null,
+	foreign key (created_by) references public.people_data(id)
 	-- todo
 );
 
-create table if not exists sc_languages (
-	sil_ethnologue_id int primary key,
+create table if not exists sc.languages_data (
+	id int primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
+	created_by int not null,
 	is_dialect bool,
 	is_sign_language bool,
 	is_least_of_these bool,
---	display_name varchar(255) unique not null,
+	display_name varchar(255) unique not null,
 	least_of_these_reason varchar(255),
 	name varchar(255) unique not null,
 	population_override int,
@@ -117,95 +139,111 @@ create table if not exists sc_languages (
 	sensitivity sensitivity,
 	sign_language_code varchar(32),
 	sponsor_estimated_eng_date timestamp,
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (id) references sil.table_of_languages_data(id)
 );
 
-create table if not exists sc_language_locations (
-	sil_ethnologue_id int not null,
-	sys_location_id int not null,
+create table if not exists sc.language_locations_data (
+    id serial primary key,
+	ethnologue_id int not null,
+	location_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sil_ethnologue_id, sys_location_id),
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
+	created_by int not null,
+	unique (ethnologue_id, location_id),
+	foreign key (created_by) references public.people_data(id),
+	foreign key (ethnologue_id) references sil.table_of_languages_data(id)
 	-- todo
 );
 
-create table if not exists sc_language_goals (
-    sil_ethnologue_id int not null,
-	sc_goal_id int not null,
+create table if not exists sc.language_goals_data (
+    id serial primary key,
+    ethnologue_id int not null,
+	goal_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	primary key (sil_ethnologue_id, sc_goal_id),
-	foreign key (sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
+	created_by int not null,
+	unique (ethnologue_id, goal_id),
+	foreign key (created_by) references public.people_data(id),
+	foreign key (ethnologue_id) references sil.table_of_languages_data(id),
+	foreign key (goal_id) references sc.language_goal_definitions_data(id)
 	-- todo
 );
 
 -- USER TABLES --------------------------------------------------------------
 
-create table if not exists sc_known_languages_by_person (
-    sys_person_id int not null,
-    known_language_sil_ethnologue_id int not null,
+create table if not exists sc.known_languages_by_person_data (
+    id serial primary key,
+    person int not null,
+    known_language int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	foreign key (sys_person_id) references sys_people(sys_person_id),
-	foreign key (known_language_sil_ethnologue_id) references sil_table_of_languages(sil_ethnologue_id)
+	created_by int not null,
+	unique (person, known_language),
+	foreign key (created_by) references public.people_data(id),
+	foreign key (person) references public.people_data(id),
+	foreign key (known_language) references sil.table_of_languages_data(id)
 );
 
-create table if not exists sc_people (
-    sys_person_id int primary key,
-    sc_internal_person_id varchar(32) unique,
+create table if not exists sc.people_data (
+    id int primary key,
+    internal_id varchar(32) unique,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
+	created_by int not null,
 	skills varchar(32)[],
 	status varchar(32),
-	foreign key (sys_person_id) references sys_people(sys_person_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (id) references public.people_data(id)
 );
 
-create table if not exists sc_person_unavailabilities (
-    sys_person_id int primary key,
+create table if not exists sc.person_unavailabilities_data (
+    id int primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
+	created_by int not null,
 	description text,
 	period_end timestamp not null,
 	period_start timestamp not null,
-	foreign key (sys_person_id) references sys_people(sys_person_id)
+	foreign key (created_by) references public.people_data(id).
+	foreign key (id) references public.people_data(id)
 );
 
 -- FILES & DIRECTORIES ----------------------------------------------------------
 
-create table if not exists sc_directories (
-    sc_directory_id serial primary key,
+create table if not exists sc.directories_data (
+    id serial primary key,
     name varchar(255),
-    creator_sys_person_id int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-    foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+    created_by int not null,
+    foreign key (created_by) references public.people_data(id)
 	-- todo
 );
 
-create table if not exists sc_files (
-    sc_file_id serial primary key,
+create table if not exists sc.files_data (
+    id serial primary key,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	creator_sys_person_id int not null,
+	created_by int not null,
+    directory_id int not null,
 	name varchar(255),
---  sc_directory_id int not null,
---	foreign key (sc_directory_id) references sc_directories(sc_directory_id),
-	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+	foreign key (created_by) references public.people_data(id),
+	foreign key (directory_id) references sc.directories_data(id),
 );
 
-create table if not exists sc_file_versions (
-    sc_file_version_id serial primary key,
+create table if not exists sc.file_versions_data (
+    id serial primary key,
     category varchar(255),
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-    creator_sys_person_id int not null,
---    mime_type mime_type not null,
+    created_by int not null,
+    mime_type mime_type not null,
     name varchar(255) not null,
---    sc_file_id int not null,
---    sc_file_url varchar(255) not null,
+    file_id int not null,
+    file_url varchar(255) not null,
     file_size int, -- bytes
---    foreign key (sc_file_id) references sc_files(sc_file_id),
-	foreign key (creator_sys_person_id) references sys_people(sys_person_id)
+    foreign key (created_by) references public.people_data(id),
+    foreign key (file_id) references sc.files_data(id)
 );
 
 -- PROJECT TABLES ----------------------------------------------------------
 
 -- todo
 DO $$ BEGIN
-    create type sc_project_step as enum (
+    create type sc.project_step as enum (
 		'A',
 		'B',
 		'C'
@@ -216,7 +254,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_project_status as enum (
+    create type sc.project_status as enum (
 		'A',
 		'B',
 		'C'
@@ -225,17 +263,19 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists sc_change_to_plans (
-    sc_change_to_plan_id serial primary key,
+create table if not exists sc.change_to_plans_data (
+    id serial primary key,
     type sc_change_to_plan_type,
     summary text,
     status sc_change_to_plan_status,
-	created_at timestamp not null default CURRENT_TIMESTAMP
+	created_at timestamp not null default CURRENT_TIMESTAMP,
+	created_by int not null,
+	foreign key (created_by) references public.people_data(id)
 );
 
 -- todo
 DO $$ BEGIN
-    create type sc_change_to_plan_type as enum (
+    create type sc.change_to_plan_type as enum (
 		'a',
 		'b',
 		'c'
@@ -246,7 +286,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc_change_to_plan_status as enum (
+    create type sc.change_to_plan_status as enum (
 		'a',
 		'b',
 		'c'
@@ -255,7 +295,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists sc_projects (
+create table if not exists sc.projects_data (
 	project_sys_group_id int not null,
 	sc_change_to_plan_id int not null default 0,
 	sc_internal_project_id varchar(255) not null,
