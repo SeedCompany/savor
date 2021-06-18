@@ -1,4 +1,6 @@
-create or replace function get_access_level(p_person_id int, p_table_name table_name, p_column_name varchar(255))
+-- get new access level for a person for a particular column of a particular security table after the role grant or role membership has been updated
+
+create or replace function get_new_access_level(p_person_id int, p_table_name table_name, p_column_name varchar(255))
 returns access_level 
 language PLPGSQL
 as $$
@@ -11,8 +13,8 @@ rec2 record;
 begin 
     security_table_name := p_table_name || '_security';
 	raise info '%, %, %', p_person_id, p_table_name, p_column_name;
+    
     execute format('select count(*) from ' || quote_ident(security_table_name) ||' where __sys_person_id = '||p_person_id) into entries_count_for_person;
-	
         if entries_count_for_person != 0 then
 
             for rec1 in (select * from sys_role_memberships where sys_person_id = p_person_id) loop 

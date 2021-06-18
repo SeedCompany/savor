@@ -1,4 +1,4 @@
-create or replace function populate_security_on_roles_fn()
+create or replace function populate_security_global_member()
 returns trigger
 language PLPGSQL
 as $$
@@ -21,6 +21,6 @@ DROP TRIGGER sys_role_memberships_insert_trigger on sys_role_memberships;
 
 CREATE TRIGGER sys_role_memberships_insert_trigger
 AFTER INSERT
-ON sys_role_memberships
+ON global_role_memberships
 FOR EACH ROW
-EXECUTE PROCEDURE populate_security_on_role_fn();
+EXECUTE PROCEDURE populate_security_global_member_fn();

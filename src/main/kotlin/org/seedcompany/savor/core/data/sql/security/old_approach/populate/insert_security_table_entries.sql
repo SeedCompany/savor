@@ -8,14 +8,18 @@ entries_count_for_person int;
 security_table_name text;
 rec1 record;
 rec2 record;
+rec3 record;
 base_table_column_value text;
 non_nullable_columns text;
 non_nullable_column_values text;
 final_columns text;
 final_values text;
-current_access_level text;
+current_access_level access_level;
+row_level_access access_level;
+final_access_level access_level;
 begin 
 	p_column_name := '_' || p_column_name;
+    -- p_table_name := replace(p_table_name, 'public.', '');
     security_table_name := p_table_name || '_security';
     execute format('select count(*) from ' || quote_ident(security_table_name) ||' where __sys_person_id = '||p_person_id) into entries_count_for_person;
 	
@@ -37,7 +41,7 @@ begin
 
                         rec2.column_name := replace(rec2.column_name, '__', '');
                         execute format('select ' || rec2.column_name || ' from ' || p_table_name ||
-                            ' where reference_count = '|| rec1.reference_count) into base_table_column_value;
+                            ' where id = '|| rec1.id) into base_table_column_value;
 
                         raise info 'base_table_column_name: % ', rec2.column_name;
                         raise info 'base_table_column_value: % ', base_table_column_value;
@@ -66,14 +70,32 @@ begin
                 execute format('insert into '|| security_table_name || '(' || final_columns ||  ') values(' 
                                || final_values || ')');
 
-                execute format('update '|| security_table_name || ' set ' || p_column_name 
-                                || ' = ' || quote_literal(p_access_level)|| ' where __sys_person_id = '|| p_person_id);
 
+                -- currently the logic only accounts for sys_locations (thinking of using case statements here for tables)
+                
+                if p_table_name = 'public.locations' then 
+                    select get_row_level_access(p_person_id, p_table_name,p_column_name) into row_level_access;
+                end if;
+
+--              assigning the max(global,project) access level to the final_access_level
+                if row_level_access = 'Write' then 
+                    final_access_level := 'Write';
+                elif row_level_access = 'Read' and p_access_level != 'Write' then
+                    final_access_level := 'Read';
+                else 
+                    final_access_level := p_access_level;
+                end if;
+
+
+                execute format('update '|| security_table_name || ' set ' || p_column_name 
+                                || ' = ' || quote_literal(final_access_level)|| ' where __sys_person_id = '|| p_person_id);
+                
             end loop;
         else 
-        --  get the current access level of the column
-            execute format('select '|| p_column_name || ' from ' || security_table_name || ' 
-            where __sys_person_id =' || p_person_id || ' limit 1') into current_access_level;
+
+        for rec3 in execute format('select '|| p_column_name || ' from ' || security_table_name || ' 
+            where __sys_person_id =' || p_person_id);
+            current_access_level := rec3.access_level;
         --  if the access level isn't write, then update it 
             if current_access_level != 'Write' or current_access_level is NULL then
                 execute format('update '|| security_table_name || ' set ' || p_column_name 

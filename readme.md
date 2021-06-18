@@ -2,35 +2,54 @@
 
 Experiment in a common Postgres DB for DA/DevOps
 
-# API
+## API Setup
 
-- Create an application.conf file in the apiMain resources folder. Look at the Config service for its structure. Here is a sample:
+- Create src/main/resources/application.yml with the following structure. Replace values as needed.
 
-savor {
-postgres {
-url = ""
-database = ""
-user = ""
-password = ""
-}
-neo4j {
-url = ""
-database = ""
-user = ""
-password = ""
-}
-}
-
-## Todo
-
-Currently using the blocking JDBC driver for Postgres. Need to upgrade to a non-blocking lib.
+```
+postgres:
+    url: jdbc:postgresql://localhost
+    database: postgres
+    user: postgres
+    password: admin
+    port: 5432
+neo4j:
+  url: bolt://localhost:7687
+  database: neo4j
+  user: neo4j
+  password: test
+```
 
 ## Database Design Principles
 
 1. Multi-tenancy first. There are system tables (`sys_*`) that share common entities/properties between orgs and org-specific tables (e.g. `sc_*`) that are used by just one org.
-2. Tenants extend system tables when able. System tables store columns shared by multiple orgs. When a single org needs more data associated with a system entity, it's new table should extend/reference the system table and not duplicate columns.
-3. The system security concept should be the only concept used by all orgs. It enables field-level permissions but requires each role to only have one set of column + row definition per role.
-4. Read performance is an important design principle. Where possible, materialized views or denormalized data tables should be used to increase read performance.
-5. The database must have a schema-ed record of all changes to it. The schema must be configured in such a way that queries can be written to search for historical data on any column. `*_history` tables are used for this.
-6. ID fields are verbosely named and must carry there long name whenever another table references them. For example, if another table references a partner org, instead of calling the field 'partner', or 'partner_id', it must be called 'partner_sys_group_id', because the 'sys_group_id' is the name of the field on the referenced table. This only applies to ID fields.
-7. Security is accomplished by using the org, role, and project memberhsip tables and grants tables to populate `*_security` tables. The `*_security` tables are then combined with the data tables to populate the `*_secure_view` tables. The `*_secure_view` tables provide secure read access when a `user_id` is provided.
+1. Tenants extend system tables when able. System tables store columns shared by multiple orgs. When a single org needs more data associated with a system entity, it's new table should extend/reference the system table and not duplicate columns.
+1. The system security concept should be the only concept used by all orgs. It enables field-level permissions on any data table.  
+1. Read performance is an important design principle. Where possible, materialized views or denormalized data tables should be used to increase read performance.
+1. The database must have a schema-ed record of all changes to it. The schema must be configured in such a way that queries can be written to search for historical data on any column. `*_history` tables are used for this.
+1. Security is accomplished by using the org, role, sensitivity clearance, and project membership tables and grants tables to populate `*_security` tables. The `*_security` tables are then combined with the data tables to populate the `*_secure_view` tables. The `*_secure_view` tables provide secure read access when a `user_id` is provided.
+
+
+## Security and History
+
+All tables in the schema suffixed with `_data` will have auto-generated `_history`, `_security`, and `_secure_view` tables built from the schema provided in the `_data` table.
+1. The `_history` table:
+    1. The corresponding `_history` table will have the same columns as the `_data` table with the following modifications:
+        1. The `_history` columns that track the `_data` columns will have the same name.
+        1. They will not have `not null` constraints. Other columns in the `_history` table will, just not those from the `_data` table.
+        1. They will not have foreign key constraints. Inserts into the `_history` table should never fail. The `_id` is the only primary key and it is auto-generated. The timestamp also has a default.
+    1. The `_history` table will have additional columns that are unique to the `*_history` tables:
+        1. An `_history_id serial primary key` column. This will keep track of the different versions of a `*_data` entry and is the only column that makes up the primary key.
+        1. An `_history_created_at timestamp not null default CURRENT_TIMESTAMP` column. This keeps track of when thie history entry is added. It should not be modified, only the default value should be used.
+1. The `_security` table:
+    1. Will all have the columns of the `_data` table but the names will be prefaced with an underscore. So `name` becomes `_name`.
+    1. Each column from the `_data` table will have the type `access_level`.
+    1. There will two additional columns. One called `__person_id` and one called `__id` (double underscore).
+    1. The `__person_id` column is `int not null` and represent the specific person that is being given access. It should have a foreign key constraint to `public.people(id)`.
+    1. The `__id` column refers directly to the `id` column in the `_data` table and should have a foreign key constraint to that table (must be created dynamically based on the `_data` table).
+1. The `_secure_view` table is a materialized view that let's us do secure reads using a user's id. They are generated by joining the `_data` and `_security` tables together.
+
+***
+### When auto-generating tables you will often need to not add foreign keys until certain tables are created. It will be common that after the `people` or `organizations` table to add foreign keys for many other tables.
+***
+
