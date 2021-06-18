@@ -163,7 +163,7 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
-create table if not exists public.scripture_references_data (
+create table if not exists public.scripture_references (
     id serial primary key,
     book_start book_name,
     book_end book_name,
@@ -290,7 +290,7 @@ ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_rol
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_secripture_references_created_by_fk') THEN
-ALTER TABLE public.scripture_references_data ADD CONSTRAINT public_secripture_references_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.scripture_references ADD CONSTRAINT public_secripture_references_created_by_fk foreign key (created_by) references people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_locations_created_by_fk') THEN

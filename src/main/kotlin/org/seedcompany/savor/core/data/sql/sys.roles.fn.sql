@@ -18,10 +18,10 @@ begin
         SELECT id
         FROM public.global_roles_data
         INTO vSysRoleId
-        WHERE global_roles_data.org_id = vOrgId
+        WHERE global_roles_data.org = vOrgId
             AND global_roles_data.name = pRoleName;
         IF NOT FOUND THEN
-            INSERT INTO public.global_roles_data("org_id", "name")
+            INSERT INTO public.global_roles_data("org", "name")
             VALUES (vOrgId, pRoleName);
             vResponseCode := 0;
         ELSE
@@ -57,18 +57,18 @@ begin
         SELECT id
         FROM public.global_roles_data
         INTO vSysRoleId
-        WHERE global_roles_data.org_id = vOrgId
+        WHERE global_roles_data.org = vOrgId
             AND global_roles_data.name = pRoleName;
         IF FOUND THEN
-            SELECT global_role_id
+            SELECT global_role
             FROM global_role_column_grants_data
             INTO vSysRoleId2
-            WHERE global_role_column_grants_data.global_role_id = vSysRoleId
+            WHERE global_role_column_grants_data.global_role = vSysRoleId
                 AND global_role_column_grants_data.table_name = pTableName
                 AND global_role_column_grants_data.column_name = pColumnName
                 AND global_role_column_grants_data.access_level = pAccessLevel;
             IF NOT FOUND THEN
-                INSERT INTO global_role_column_grants_data("global_role_id", "table_name", "column_name", "access_level")
+                INSERT INTO global_role_column_grants_data("global_role", "table_name", "column_name", "access_level")
                 VALUES (vSysRoleId, pTableName, pColumnName, pAccessLevel);
                 vResponseCode := 0;
             ELSE
@@ -105,15 +105,15 @@ begin
         SELECT id
         FROM public.global_roles_data
         INTO vSysRoleId
-        WHERE global_roles_data.org_id = vOrgId
+        WHERE global_roles_data.org = vOrgId
             AND global_roles_data.name = pRoleName;
         IF FOUND THEN
-            select person_id
+            select person
             from public.users_data
             into vSysPersonId
             where users_data.email = pUserEmail;
             if found then
-                INSERT INTO global_role_memberships_data("person_id", "global_role_id")
+                INSERT INTO global_role_memberships_data("person", "global_role")
                 VALUES (vSysPersonId, vSysRoleId);
                 vResponseCode := 0;
             else

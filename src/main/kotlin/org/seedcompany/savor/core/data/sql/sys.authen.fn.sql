@@ -11,7 +11,7 @@ declare
     vSysPersonId INT;
     vOrgId INT;
 begin
-    SELECT person_id
+    SELECT person
     FROM public.users_data
     INTO vSysPersonId
     WHERE users_data.email = pEmail;
@@ -24,7 +24,7 @@ begin
             INSERT INTO public.people_data VALUES (DEFAULT)
             RETURNING id
             INTO vSysPersonId;
-            INSERT INTO public.users_data("person_id", "email", "password", "owning_org_id")
+            INSERT INTO public.users_data("person", "email", "password", "owning_org")
             VALUES (vSysPersonId, pEmail, pPassword, vOrgId);
             vResponseCode := 0;
         ELSE
@@ -54,8 +54,8 @@ begin
     INTO vRow
     WHERE users_data.email = pEmail AND users_data.password = pPassword;
     IF found THEN
-        INSERT INTO public.tokens("token", "person_id")
-        VALUES (pToken, vRow.person_id);
+        INSERT INTO public.tokens("token", "person")
+        VALUES (pToken, vRow.person);
         vResponseCode := 0;
     ELSE
         vResponseCode := 2;

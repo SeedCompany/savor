@@ -40,14 +40,14 @@ select * from sys_add_role_grant('Admin', 'Seed Company', 'public.locations_data
 select * from sys_add_role_member('Admin', 'Seed Company', 'michael_marshall@tsco.org');
 
 -- PROJECT ROLES
-insert into public.project_roles_data("name", "org_id") values ('Project Manager', 0) on conflict do nothing;
-insert into public.project_roles_data("name", "org_id") values ('Consultant', 0) on conflict do nothing;
-insert into public.project_roles_data("name", "org_id") values ('Intern', 0) on conflict do nothing;
+insert into public.project_roles_data("name", "org") values ('Project Manager', 0) on conflict do nothing;
+insert into public.project_roles_data("name", "org") values ('Consultant', 0) on conflict do nothing;
+insert into public.project_roles_data("name", "org") values ('Intern', 0) on conflict do nothing;
 
 -- PROJECT ROLE GRANTS
 -- todo: these have hard coded role ids, which we have to use until we have functions to add project roles.
---insert into public.project_role_grants_data("access_level", "column_name", "project_role_id", "table_name") values ('Write', 'name', 1, 'public.projects_data') on conflict do nothing;
---insert into public.project_role_grants_data("access_level", "column_name", "project_role_id", "table_name") values ('Read', 'name', 2, 'public.projects_data') on conflict do nothing;
+--insert into public.project_role_grants_data("access_level", "column_name", "project_role", "table_name") values ('Write', 'name', 1, 'public.projects_data') on conflict do nothing;
+--insert into public.project_role_grants_data("access_level", "column_name", "project_role", "table_name") values ('Read', 'name', 2, 'public.projects_data') on conflict do nothing;
 
 -- PROJECTS
 insert into public.projects_data("name") values ('proj 1') on conflict do nothing;
@@ -56,12 +56,12 @@ insert into public.projects_data("name") values ('proj 3') on conflict do nothin
 
 -- PROJECT MEMBERSHIP
 -- todo: replace with functions
---insert into public.project_memberships_data("person_id", "project_id") values (1,1) on conflict do nothing;
---insert into public.project_memberships_data("person_id", "project_id") values (2,1) on conflict do nothing;
+--insert into public.project_memberships_data("person", "project") values (1,1) on conflict do nothing;
+--insert into public.project_memberships_data("person", "project") values (2,1) on conflict do nothing;
 
 -- PROJECT ROLE MEMBERSHIPS
 -- todo: need to use functions to avoid hard coded ids
---insert into public.project_member_roles_data("person_id", "project_id", "project_role_id") values (1, 1, 1) on conflict do nothing;
---insert into public.project_member_roles_data("person_id", "project_id", "project_role_id") values (2, 1, 1) on conflict do nothing;
---insert into public.project_member_roles_data("person_id", "project_id", "project_role_id") values (3, 1, 1) on conflict do nothing;
---insert into public.project_member_roles_data("person_id", "project_id", "project_role_id") values (4, 1, 1) on conflict do nothing;
+--insert into public.project_member_roles_data("person", "project", "project_role") values (1, 1, 1) on conflict do nothing;
+--insert into public.project_member_roles_data("person", "project", "project_role") values (2, 1, 1) on conflict do nothing;
+--insert into public.project_member_roles_data("person", "project", "project_role") values (3, 1, 1) on conflict do nothing;
+--insert into public.project_member_roles_data("person", "project", "project_role") values (4, 1, 1) on conflict do nothing;
