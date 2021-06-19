@@ -1,10 +1,10 @@
 ## Todo
-- Make annotations to hid the websocket and event bus framework
+- Make annotations to hide the websocket and event bus framework
 
 ## Doing
 
 ## Done
-- setup websokets and event messaging
+- setup websockets and event messaging
 - document the rules for security grants (orgs, roles, projects, sensitivity)
 - add tables to support giving a `Create` and `Delete` permission to users  
 - split schema into public schema and org specific schemas

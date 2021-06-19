@@ -43,11 +43,12 @@ create table if not exists public.global_roles_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	name varchar(255) not null,
 	org int,
 	unique (org, name)
---	foreign key (created_by) references public.people_data(id), -- fk added later
+--	foreign key (created_by) references public.people_data(id),
+--    foreign key (modified_by) references public.people_data(id), -- fk added later
 --	foreign key (org) references public.organizations_data(id) -- fk added later
 );
 
@@ -125,10 +126,11 @@ create table if not exists public.global_role_column_grants_data (
 	created_by int not null default 0,
 	global_role int not null,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	table_name table_name not null,
 	unique (global_role, table_name, column_name, access_level),
---	foreign key (created_by) references public.people_data(id), -- fk added later
+--	foreign key (created_by) references public.people_data(id),
+--    foreign key (modified_by) references public.people_data(id), -- fk added later
 	foreign key (global_role) references public.global_roles_data(id)
 );
 
@@ -138,11 +140,12 @@ create table if not exists public.global_role_table_permissions_data(
     created_by int not null default 0,
     global_role int not null,
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     table_name varchar(32) not null,
     table_permission table_permission not null,
     unique (global_role, table_name, table_permission),
---	foreign key (created_by) references public.people_data(id), -- fk added later
+--	foreign key (created_by) references public.people_data(id),
+--    foreign key (modified_by) references public.people_data(id), -- fk added later
     foreign key (global_role) references public.global_roles_data(id)
 );
 
@@ -152,9 +155,10 @@ create table if not exists public.global_role_memberships_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	person int,
---	foreign key (created_by) references public.people_data(id), -- fk added later
+--	foreign key (created_by) references public.people_data(id),
+--    foreign key (modified_by) references public.people_data(id), -- fk added later
 	foreign key (global_role) references global_roles_data(id)
 );
 
@@ -177,12 +181,9 @@ create table if not exists public.scripture_references (
     book_end book_name,
     chapter_start int,
     chapter_end int,
-    created_at timestamp not null default CURRENT_TIMESTAMP,
-    created_by int not null default 0,
     verse_start int,
     verse_end int,
     unique (book_start, book_end, chapter_start, chapter_end, verse_start, verse_end)
---    foreign key (created_by) references public.people_data(id) -- fk added later
 );
 
 -- LOCATION -----------------------------------------------------------------
@@ -204,11 +205,12 @@ create table if not exists public.locations_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	name varchar(255) unique not null,
 	sensitivity sensitivity not null default 'High',
 	type location_type not null
 --	foreign key (created_by) references public.people_data(id) -- fk added later
+--    foreign key (modified_by) references public.people_data(id),
 );
 
 -- LANGUAGE -----------------------------------------------------------------
@@ -261,7 +263,7 @@ create table if not exists public.people_data (
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int default 0, -- don't make not null!
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int, -- don't make not null or give a default!
     phone varchar(32),
 	picture varchar(255),
     primary_org int,
@@ -276,6 +278,7 @@ create table if not exists public.people_data (
     time_zone varchar(32),
     title varchar(255),
     foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 --    foreign key (primary_org) references public.organizations_data(id), -- fk added later
     foreign key (primary_location) references public.locations_data(id)
 );
@@ -285,12 +288,24 @@ DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_g
 ALTER TABLE public.global_roles_data ADD CONSTRAINT public_global_roles_created_by_fk foreign key (created_by) references people_data(id);
 END IF; END; $$;
 
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_roles_modified_by_fk') THEN
+ALTER TABLE public.global_roles_data ADD CONSTRAINT public_global_roles_modified_by_fk foreign key (modified_by) references people_data(id);
+END IF; END; $$;
+
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_grants_created_by_fk') THEN
 ALTER TABLE public.global_role_column_grants_data ADD CONSTRAINT public_global_role_grants_created_by_fk foreign key (created_by) references people_data(id);
 END IF; END; $$;
 
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_grants_modified_by_fk') THEN
+ALTER TABLE public.global_role_column_grants_data ADD CONSTRAINT public_global_role_grants_modified_by_fk foreign key (modified_by) references people_data(id);
+END IF; END; $$;
+
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_table_permissions_created_by_fk') THEN
 ALTER TABLE public.global_role_table_permissions_data ADD CONSTRAINT public_global_role_table_permissions_created_by_fk foreign key (created_by) references people_data(id);
+END IF; END; $$;
+
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_table_permissions_modified_by_fk') THEN
+ALTER TABLE public.global_role_table_permissions_data ADD CONSTRAINT public_global_role_table_permissions_modified_by_fk foreign key (modified_by) references people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_memberships_person_fk') THEN
@@ -301,12 +316,16 @@ DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_g
 ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_created_by_fk foreign key (created_by) references people_data(id);
 END IF; END; $$;
 
-DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_secripture_references_created_by_fk') THEN
-ALTER TABLE public.scripture_references ADD CONSTRAINT public_secripture_references_created_by_fk foreign key (created_by) references people_data(id);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_memberships_modified_by_fk') THEN
+ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_modified_by_fk foreign key (modified_by) references people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_locations_created_by_fk') THEN
 ALTER TABLE public.locations_data ADD CONSTRAINT public_locations_created_by_fk foreign key (created_by) references people_data(id);
+END IF; END; $$;
+
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_locations_modified_by_fk') THEN
+ALTER TABLE public.locations_data ADD CONSTRAINT public_locations_modified_by_fk foreign key (modified_by) references people_data(id);
 END IF; END; $$;
 
 -- Education
@@ -319,8 +338,9 @@ create table if not exists public.education_entries_data (
     institution varchar(64),
     major varchar(64),
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
-    foreign key (created_by) references public.people_data(id)
+    modified_by int not null default 0,
+    foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id)
 );
 
 create table if not exists public.education_by_person_data (
@@ -330,9 +350,10 @@ create table if not exists public.education_by_person_data (
     education int not null,
     graduation_year int,
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     person int not null,
     foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (person) references public.people_data(id),
 	foreign key (education) references public.education_entries_data(id)
 );
@@ -344,11 +365,12 @@ create table if not exists public.organizations_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	name varchar(255) unique not null,
 	sensitivity sensitivity default 'High',
 	primary_location int,
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (primary_location) references locations_data(id)
 );
 
@@ -392,11 +414,12 @@ create table if not exists public.organization_grants_data(
     created_by int not null default 0,
     column_name varchar(32) not null,
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     org int not null,
     table_name table_name not null,
     unique (org, table_name, column_name, access_level),
     foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
     foreign key (org) references organizations_data(id)
 );
 
@@ -405,10 +428,11 @@ create table if not exists public.organization_memberships_data(
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null default 0,
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     org int not null,
     person int not null,
     foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
     foreign key (org) references organizations_data(id),
     foreign key (person) references people_data(id)
 );
@@ -420,8 +444,9 @@ create table if not exists public.people_to_org_relationships_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (org) references organizations_data(id),
 	foreign key (person) references people_data(id)
 );
@@ -433,10 +458,11 @@ create table if not exists public.people_to_org_relationship_type_data (
     begin_at timestamp not null,
 	end_at timestamp,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     people_to_org int,
 	relationship_type person_to_org_relationship_type,
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (people_to_org) references people_to_org_relationships_data(id)
 );
 
@@ -451,8 +477,9 @@ create table if not exists public.users_data(
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (person) references public.people_data(id),
 	foreign key (owning_org) references public.organizations_data(id)
 );
@@ -464,13 +491,14 @@ create table if not exists public.projects_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	name varchar(32) not null,
 	primary_org int,
 	primary_location int,
 	sensitivity sensitivity default 'High',
 	unique (primary_org, name),
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (primary_org) references organizations_data(id),
 	foreign key (primary_location) references locations_data(id)
 );
@@ -480,10 +508,11 @@ create table if not exists public.project_memberships_data (
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null default 0,
     modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     person int not null,
     project int not null,
     foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
     foreign key (project) references projects_data(id),
     foreign key (person) references people_data(id)
 );
@@ -493,11 +522,12 @@ create table if not exists public.project_roles_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	name varchar(255) not null,
 	org int,
 	unique (org, name),
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (org) references public.organizations_data(id)
 );
 
@@ -508,11 +538,12 @@ create table if not exists public.project_role_grants_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
 	project_role int not null,
 	table_name table_name not null,
 	unique (project_role, table_name, column_name, access_level),
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (project_role) references project_roles_data(id)
 );
 
@@ -521,12 +552,13 @@ create table if not exists public.project_member_roles_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
-    modified_by int not null,
+    modified_by int not null default 0,
     person int not null,
     project int not null,
 	project_role int,
 	unique (project, person),
 	foreign key (created_by) references public.people_data(id),
+    foreign key (modified_by) references public.people_data(id),
 	foreign key (person) references people_data(id),
 	foreign key (project) references projects_data(id),
 	foreign key (project_role) references project_roles_data(id)
