@@ -47,9 +47,7 @@ create table if not exists public.global_roles_data (
 	name varchar(255) not null,
 	org int,
 	unique (org, name)
---	foreign key (created_by) references public.people_data(id),
---    foreign key (modified_by) references public.people_data(id), -- fk added later
---	foreign key (org) references public.organizations_data(id) -- fk added later
+-- foreign keys added after people and org table created
 );
 
 DO $$ BEGIN
@@ -129,8 +127,7 @@ create table if not exists public.global_role_column_grants_data (
     modified_by int not null default 0,
 	table_name table_name not null,
 	unique (global_role, table_name, column_name, access_level),
---	foreign key (created_by) references public.people_data(id),
---    foreign key (modified_by) references public.people_data(id), -- fk added later
+    -- foreign keys added after people table created
 	foreign key (global_role) references public.global_roles_data(id)
 );
 
@@ -144,8 +141,7 @@ create table if not exists public.global_role_table_permissions_data(
     table_name varchar(32) not null,
     table_permission table_permission not null,
     unique (global_role, table_name, table_permission),
---	foreign key (created_by) references public.people_data(id),
---    foreign key (modified_by) references public.people_data(id), -- fk added later
+-- foreign keys added after people table created
     foreign key (global_role) references public.global_roles_data(id)
 );
 
@@ -157,8 +153,7 @@ create table if not exists public.global_role_memberships_data (
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
     modified_by int not null default 0,
 	person int,
---	foreign key (created_by) references public.people_data(id),
---    foreign key (modified_by) references public.people_data(id), -- fk added later
+-- foreign keys added after people table created
 	foreign key (global_role) references global_roles_data(id)
 );
 
@@ -209,8 +204,7 @@ create table if not exists public.locations_data (
 	name varchar(255) unique not null,
 	sensitivity sensitivity not null default 'High',
 	type location_type not null
---	foreign key (created_by) references public.people_data(id) -- fk added later
---    foreign key (modified_by) references public.people_data(id),
+-- foreign keys added after people table created
 );
 
 -- LANGUAGE -----------------------------------------------------------------
@@ -279,7 +273,7 @@ create table if not exists public.people_data (
     title varchar(255),
     foreign key (created_by) references public.people_data(id),
     foreign key (modified_by) references public.people_data(id),
---    foreign key (primary_org) references public.organizations_data(id), -- fk added later
+-- foreign keys added after org table created
     foreign key (primary_location) references public.locations_data(id)
 );
 
