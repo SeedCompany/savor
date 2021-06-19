@@ -7,12 +7,20 @@ Experiment in a common Postgres DB for DA/DevOps
 - Create src/main/resources/application.yml with the following structure. Replace values as needed.
 
 ```
-postgres:
-    url: jdbc:postgresql://localhost
-    database: postgres
-    user: postgres
+spring:
+  datasource:
+    jdbcUrl: jdbc:postgresql://localhost/postgres
+    driverClassName: software.aws.rds.jdbc.postgresql.Driver
+    username: postgres
     password: admin
-    port: 5432
+    ssl: false
+  hikari:
+    connection-timeout: 20000 #maximum number of milliseconds that a client will wait for a connection
+    minimum-idle: 10 #minimum number of idle connections maintained by HikariCP in a connection pool
+    maximum-pool-size: 10 #maximum pool size
+    idle-timeout: 10000 #maximum idle time for connection
+    max-lifetime: 1000 # maximum lifetime in milliseconds of a connection in the pool after it is closed.
+    auto-commit: true #default auto-commit behavior.
 neo4j:
   url: bolt://localhost:7687
   database: neo4j
