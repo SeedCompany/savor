@@ -1,5 +1,10 @@
 ## Todo
 - Make annotations to hide the websocket and event bus framework
+- add user registration, login, logout
+- add posts schema
+- add project progress schema
+- add project goals schema
+- finish change to plan schema
 
 ## Doing
 
