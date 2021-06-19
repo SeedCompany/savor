@@ -1,6 +1,7 @@
 package org.seedcompany.savor.core
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
@@ -17,7 +18,12 @@ class Postgres(
     @Autowired
     val config: PostgresConfig,
     @Autowired
+    @Qualifier("writerDataSource")
     val ds: DataSource,
+    // example for reader datasource:
+    @Autowired
+    @Qualifier("readerDataSource")
+    val readerDs: DataSource,
 ) {
 
     init {
@@ -36,10 +42,19 @@ class Postgres(
     }
 
     @Configuration
-    class DataSourceConfiguration {
+    class WriterDataSourceConfiguration {
         @Bean
-        @ConfigurationProperties("spring.datasource")
-        fun customDataSource(): DataSource {
+        @ConfigurationProperties("spring.writer-datasource")
+        fun writerDataSource(): DataSource {
+            return DataSourceBuilder.create().build()
+        }
+    }
+
+    @Configuration
+    class ReaderDataSourceConfiguration {
+        @Bean
+        @ConfigurationProperties("spring.reader-datasource")
+        fun readerDataSource(): DataSource {
             return DataSourceBuilder.create().build()
         }
     }
