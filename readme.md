@@ -8,7 +8,13 @@ Experiment in a common Postgres DB for DA/DevOps
 
 ```
 spring:
-  datasource:
+  writer-datasource:
+    jdbcUrl: jdbc:postgresql://localhost/postgres
+    driverClassName: software.aws.rds.jdbc.postgresql.Driver
+    username: postgres
+    password: admin
+    ssl: false
+  reader-datasource:
     jdbcUrl: jdbc:postgresql://localhost/postgres
     driverClassName: software.aws.rds.jdbc.postgresql.Driver
     username: postgres
