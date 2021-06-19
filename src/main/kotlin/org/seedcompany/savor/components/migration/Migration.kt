@@ -15,7 +15,6 @@ import java.time.ZonedDateTime
 class Migration (
     val config: Postgres,
     val neo4j: Neo4j,
-    val connection: Connection,
 ) {
 
     @Bean
