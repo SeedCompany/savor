@@ -16,7 +16,7 @@ begin
         project_column := 'primary_org_id'; 
     end if;
 
-    for rec1 in execute format('select id from public.projects_data where '|| project_column = p_id) loop 
+    for rec1 in execute format('select id from public.projects_data where '|| project_column || ' = ' || p_id) loop 
     raise info 'rec1: %', rec1; 
 
         for rec2 in execute format(select project_role from public.project_member_roles_data where person_id = p_person_id and project_id = rec1.id) loop 
@@ -24,8 +24,8 @@ begin
 
             for rec3 in (select  access_level from public.project_role_grants_data where table_name = p_table_name and column_name = p_column_name and project_role = rec2.project_role) loop 
             raise info 'rec3: %', rec3; 
-
-                if new_access_level is null or new_access_level = 'Read' then 
+            
+                if new_access_level is null or new_access_level = 'Read' and rec3.access_level is not null then 
                     new_access_level := rec3.access_level; 
                 end if;
 

@@ -1,3 +1,6 @@
+-- trigger function for projects_data, project_member_roles_data, project_role_grants_data, 
+-- global_role_memberships_data, global_role_grants_data (on insert update or delete)
+
 create or replace function refresh_security_tables(p_schema_name text)
 returns void
 language plpgsql
@@ -14,12 +17,12 @@ security_schema_table_name text;
 begin
     
     for rec1 in (select table_name from information_schema.tables where table_schema = p_schema_name and table_name like '%_security' order by table_name) loop 
+
         security_schema_table_name := p_schema_name || rec1.table_name;
         base_schema_table_name := replace(security_schema_table_name, '_security', '_data');
 
         for rec2 in (select column_name from information_schema.tables 
-                    where table_schema = p_schema_name and table_name like '%_security' 
-                    order by table_name) loop
+                    where table_schema = p_schema_name and table_name = rec1.table_name) loop
                 
             for rec3 in execute format('select __id, __person_id from '|| rec1.table_name) loop
 
@@ -29,7 +32,15 @@ begin
                 select get_project_access_level(rec3.__id, rec3.__person_id 
                 , base_schema_table_name, rec2.column_name) into project_access_level;
 
-                
+                 if project_access_level = 'Write' then 
+                    final_access_level := 'Write';
+                elif project_access_level = 'Read' and global_access_level != 'Write' then
+                    final_access_level := 'Read';
+                else 
+                    final_access_level := global_access_level;
+                end if;
+
+                execute format('update '||security_schema_table_name||' set '||rec2.column_name|| ' = ' || final_access_level || ' where __id = ' || rec3.__id ' and ' || ' __person_id = ' || rec3.__person_id );
 
             end loop;
         end loop;
