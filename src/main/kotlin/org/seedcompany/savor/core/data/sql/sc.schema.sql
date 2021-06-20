@@ -3,6 +3,37 @@
 create schema if not exists sc;
 
 -- ENUMs ----------------------------------------------------------
+DO $$ BEGIN
+    create type sc.mime_type as enum (
+          'A',
+          'B',
+          'C'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type sc.sensitivity as enum (
+		'Low',
+		'Medium',
+		'High'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type sc.location_type as enum (
+          'City',
+          'County',
+          'State',
+		  'Country',
+          'CrossBorderArea'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
 
 
 -- ACCOUNTING TABLES --------------------------------------------------------
