@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_all_triggers_fn()
+CREATE OR REPLACE FUNCTION create_history_triggers_fn()
 RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$

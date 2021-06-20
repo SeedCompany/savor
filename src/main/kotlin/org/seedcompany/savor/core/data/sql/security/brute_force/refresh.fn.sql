@@ -1,8 +1,8 @@
--- trigger function for projects_data, project_member_roles_data, project_role_grants_data, 
--- global_role_memberships_data, global_role_grants_data (on insert update or delete)
+-- trigger function for projects_data,project_member_roles_data, project_role_grants_data, 
+-- global_role_memberships_data, global_role_grants_data (on insert update or delete),
 
-create or replace function refresh_security_tables(p_schema_name text)
-returns void
+create or replace function refresh_security_tables()
+returns trigger
 language plpgsql
 as $$
 declare 
@@ -13,16 +13,17 @@ rec3 record;
 global_access_level access_level;
 project_access_level access_level;
 base_schema_table_name text;
-security_schema_table_name text;     
+security_schema_table_name text; 
+final_access_level access_level;
 begin
     
-    for rec1 in (select table_name from information_schema.tables where table_schema = p_schema_name and table_name like '%_security' order by table_name) loop 
+    for rec1 in (select table_name from information_schema.tables where table_schema = TG_ARGV[0] and table_name like '%_security' order by table_name) loop 
 
-        security_schema_table_name := p_schema_name || rec1.table_name;
+        security_schema_table_name := TG_ARGV[0] || rec1.table_name;
         base_schema_table_name := replace(security_schema_table_name, '_security', '_data');
 
         for rec2 in (select column_name from information_schema.tables 
-                    where table_schema = p_schema_name and table_name = rec1.table_name) loop
+                    where table_schema = TG_ARGV[0] and table_name = rec1.table_name) loop
                 
             for rec3 in execute format('select __id, __person_id from '|| rec1.table_name) loop
 
@@ -34,7 +35,7 @@ begin
 
                  if project_access_level = 'Write' then 
                     final_access_level := 'Write';
-                elif project_access_level = 'Read' and global_access_level != 'Write' then
+                elsif project_access_level = 'Read' and global_access_level != 'Write' then
                     final_access_level := 'Read';
                 else 
                     final_access_level := global_access_level;

@@ -12,14 +12,14 @@ begin
 
      if table_name = 'public.locations_data' then 
         project_column := 'primary_location_id'; 
-    elif table_name = 'public.organizations_data' then 
+    elsif table_name = 'public.organizations_data' then 
         project_column := 'primary_org_id'; 
     end if;
 
     for rec1 in execute format('select id from public.projects_data where '|| project_column || ' = ' || p_id) loop 
     raise info 'rec1: %', rec1; 
 
-        for rec2 in execute format(select project_role from public.project_member_roles_data where person_id = p_person_id and project_id = rec1.id) loop 
+        for rec2 in (select project_role from public.project_member_roles_data where person_id = p_person_id and project_id = rec1.id) loop 
         raise info 'rec2: %', rec2; 
 
             for rec3 in (select  access_level from public.project_role_grants_data where table_name = p_table_name and column_name = p_column_name and project_role = rec2.project_role) loop 
