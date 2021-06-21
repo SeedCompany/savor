@@ -1,6 +1,6 @@
 -- inserts the new id into the security table for each member 
 -- trigger function for each data table
-create or replace function insert_data_to_security()
+create or replace function public.insert_data_to_security()
 returns trigger
 language plpgsql
 as $$

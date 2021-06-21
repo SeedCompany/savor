@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_data_triggers(p_schema_name text)
+CREATE OR REPLACE FUNCTION public.create_data_triggers(p_schema_name text)
 RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
@@ -16,10 +16,10 @@ begin
         insert_trigger_name := quote_ident(rec1.table_name||'_security_insert_trigger');
 
         -- INSERT TRIGGER
-        execute format('DROP TRIGGER IF EXISTS '|| insert_trigger_name || ' ON ' ||rec.table_name);
+        execute format('DROP TRIGGER IF EXISTS '|| insert_trigger_name || ' ON ' ||rec1.table_name);
         execute format('CREATE TRIGGER ' || insert_trigger_name
         || ' AFTER INSERT
-        ON ' || rec.table_name || 
+        ON ' || rec1.table_name || 
         ' FOR EACH ROW
         EXECUTE PROCEDURE insert_data_to_security()'); 
 
