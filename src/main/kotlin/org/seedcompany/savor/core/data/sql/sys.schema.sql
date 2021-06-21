@@ -466,7 +466,7 @@ create table if not exists public.project_roles_data (
 	foreign key (org) references public.organizations_data(id)
 );
 
-create table if not exists public.project_role_grants_data (
+create table if not exists public.project_role_column_grants_data (
     id serial primary key,
 	access_level access_level not null,
 	column_name varchar(32) not null,

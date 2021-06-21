@@ -1,4 +1,4 @@
--- trigger function for projects_data,project_member_roles_data, project_role_grants_data, 
+-- trigger function for projects_data,project_member_roles_data, project_role_column_grants_data, 
 -- global_role_memberships_data, global_role_grants_data (on insert update or delete),
 
 create or replace function public.refresh_security_tables()
