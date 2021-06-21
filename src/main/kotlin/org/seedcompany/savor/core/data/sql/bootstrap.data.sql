@@ -36,6 +36,7 @@ select * from public.sys_add_role_grant('Admin', 'Seed Company', 'public.locatio
 select * from public.sys_add_role_grant('Admin', 'Seed Company', 'public.locations_data', 'created_at', 'Read');
 select * from public.sys_add_role_grant('Admin', 'Seed Company', 'public.locations_data', 'sensitivity', 'Read');
 
+
 -- ROLE MEMBERSHIPS
 select * from public.sys_add_role_member('Admin', 'Seed Company', 'michael_marshall@tsco.org');
 
@@ -56,12 +57,17 @@ insert into public.projects_data("name") values ('proj 3') on conflict do nothin
 
 -- PROJECT MEMBERSHIP
 -- todo: replace with functions
---insert into public.project_memberships_data("person", "project") values (1,1) on conflict do nothing;
+insert into public.project_memberships_data("person", "project") values (1,1) on conflict do nothing;
 --insert into public.project_memberships_data("person", "project") values (2,1) on conflict do nothing;
 
 -- PROJECT ROLE MEMBERSHIPS
 -- todo: need to use functions to avoid hard coded ids
---insert into public.project_member_roles_data("person", "project", "project_role") values (1, 1, 1) on conflict do nothing;
+insert into public.project_member_roles_data("person", "project", "project_role") values (1, 1, 1) on conflict do nothing;
+insert into public.project_member_roles_data("person", "project", "project_role") values (2, 1, 1) on conflict do nothing;
+
+insert into public.project_role_grants_data("access_level","column_name", "project_role", "table_name")
+values('Write', 'name', 1, 'public.locations_data' );
+select * from public.locations_security;
 --insert into public.project_member_roles_data("person", "project", "project_role") values (2, 1, 1) on conflict do nothing;
 --insert into public.project_member_roles_data("person", "project", "project_role") values (3, 1, 1) on conflict do nothing;
 --insert into public.project_member_roles_data("person", "project", "project_role") values (4, 1, 1) on conflict do nothing;
