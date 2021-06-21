@@ -66,6 +66,7 @@ DO $$ BEGIN
 		'public.global_role_memberships_data',
 		'public.users_data',
 		'public.projects_data',
+		'public.global_role_table_permissions_data',
 		'public.tokens',
 
 		'sil.language_codes',
