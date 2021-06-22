@@ -21,12 +21,12 @@ begin
         || ' AFTER INSERT
         ON ' || rec1.table_name || 
         ' FOR EACH ROW
-        EXECUTE PROCEDURE insert_data_to_security()'); 
+        EXECUTE PROCEDURE public.insert_data_to_security()'); 
 
 
 	END loop;
 	raise info 'DONE';
 end; $$;
 
-select create_data_triggers('public');
-select create_data_triggers('sc');
+select public.create_data_triggers('public');
+select public.create_data_triggers('sc');

@@ -35,5 +35,5 @@ end; $$;
 select public.create_refresh_triggers('public','project_member_roles_data');
 select public.create_refresh_triggers('public', 'project_role_column_grants_data');
 select public.create_refresh_triggers('public', 'global_role_column_grants_data');
-select public.create_refresh_triggers('public', 'global_role_memberships_data')
+select public.create_refresh_triggers('public', 'global_role_memberships_data');
 select public.create_refresh_triggers('public', 'projects_data');

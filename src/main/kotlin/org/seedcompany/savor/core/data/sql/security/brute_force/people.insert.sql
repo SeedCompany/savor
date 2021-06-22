@@ -17,7 +17,7 @@ begin
         raise info 'table_name: %', rec1.table_name;
         base_schema_table_name := TG_ARGV[0] || '.' || rec1.table_name;
 
-        for rec2 in execute format('select id from '|| rec1.table_name) loop 
+        for rec2 in execute format('select id from '|| base_schema_table_name) loop 
 
             select public.get_sensitivity_clearance(rec2.id, new.id, new.sensitivity_clearance, TG_ARGV[0], rec1.table_name) into row_sensitivity_clearance;
             security_schema_table_name := replace(rec1.table_name, '_data', '_security');
@@ -28,7 +28,7 @@ begin
     end loop;
     raise info 'done';
 	return new;
-end; $$
+end; $$;
 
 drop trigger if exists insert_people_public_security_trigger on public.people_data;
 drop trigger if exists insert_people_sc_security_trigger on public.people_data;

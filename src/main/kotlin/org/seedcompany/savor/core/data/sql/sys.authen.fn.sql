@@ -1,4 +1,4 @@
-create or replace function sys_register(
+create or replace function public.sys_register(
     in pEmail VARCHAR(255),
     in pPassword VARCHAR(50),
     in pOrgName VARCHAR(255)
@@ -36,7 +36,7 @@ begin
     return vResponseCode;
 end; $$;
 
-create or replace function sys_login(
+create or replace function public.sys_login(
     in pEmail VARCHAR ( 255 ),
     in pPassword VARCHAR ( 50 ),
     in pToken VARCHAR ( 512 )

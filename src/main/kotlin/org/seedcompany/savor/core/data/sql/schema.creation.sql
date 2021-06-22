@@ -83,7 +83,7 @@ begin
 	end loop;
 	raise info 'DONE';
 	return status;
-end; $$
+end; $$;
 
 
 select create_security_history_tables('public');
