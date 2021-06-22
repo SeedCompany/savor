@@ -5,17 +5,19 @@ returns trigger
 language plpgsql
 as $$
 declare 
-security_schema_table text;
+base_schema_table_name text;
+security_schema_table_name text;
 rec1 record;  
-begin
-        security_schema_table := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
-		security_schema_table := replace(security_schema_table, '_data', '_security');
-		raise info 'security table: %', security_schema_table;
+begin                                           
+        base_schema_table_name := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+		security_schema_table_name := replace(security_schema_table_name, '_data', '_security');
+		raise info 'security table: %', security_schema_table_name;
 		
         
-         for rec1 in execute format('select id from public.people_data') loop
-
-             execute format('insert into '|| security_schema_table || '(__id, __person_id) values (' || new.id || ',' || quote_literal(rec1.id) || ')'); 
+         for rec1 in execute format('select id, sensitivity_clearance from public.people_data') loop
+            
+            select public.get_sensitivity_clearance(new.id, rec1.id, rec1.sensitivity_clearance, TG_TABLE_SCHEMA, TG_TABLE_NAME) into row_sensitivity_clearance;
+             execute format('insert into '|| security_schema_table_name || '(__id, __person_id) values (' || new.id || ',' || quote_literal(rec1.id) || ')'); 
             
          end loop; 
 		return new;

@@ -42,7 +42,7 @@ begin
         _history_created_at timestamp not null default CURRENT_TIMESTAMP)'); 
 
         -- SECURITY TABLE CREATION
-        execute format('create table if not exists '|| security_table_name || ' ( __person_id int not null, __id int not null, foreign key(__person_id) references public.people_data(id), foreign key (__id) references ' ||  p_table_name || '(id))' );
+        execute format('create table if not exists '|| security_table_name || ' ( __person_id int not null, __id int not null, __sensitivity_clearance boolean, foreign key(__person_id) references public.people_data(id), foreign key (__id) references ' ||  p_table_name || '(id))' );
 
 
         -- UPDATE BOTH SECURITY AND HISTORY TABLE 

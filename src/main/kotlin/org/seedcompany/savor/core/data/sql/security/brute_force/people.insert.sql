@@ -6,19 +6,23 @@ as $$
 declare 
 	rec1 record;
     rec2 record;
-    security_table_name text;
+    base_schema_table_name text;
+    security_schema_table_name text;
+    row_sensitivity_clearance boolean;
 begin
-    execute format('set schema '|| quote_literal(TG_ARGV[0]));
+    -- execute format('set schema '|| quote_literal(TG_ARGV[0]));
 
 	for rec1 in (select table_name from information_schema.tables where table_schema = TG_ARGV[0] and table_name like '%_data' order by table_name) loop 
 
         raise info 'table_name: %', rec1.table_name;
+        base_schema_table_name := TG_ARGV[0] || '.' || rec1.table_name;
 
         for rec2 in execute format('select id from '|| rec1.table_name) loop 
 
-            security_table_name := replace(rec1.table_name, '_data', '_security');
-			raise info 'security_table_name: %', security_table_name;
-            execute format('insert into '|| security_table_name || '(__id, __person_id) values (' || rec2.id || ',' || new.id || ')' );
+            select public.get_sensitivity_clearance(rec2.id, new.id, new.sensitivity_clearance, TG_ARGV[0], rec1.table_name) into row_sensitivity_clearance;
+            security_schema_table_name := replace(rec1.table_name, '_data', '_security');
+			raise info 'security_schema_table_name: %', security_schema_table_name;
+            execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __sensitivity_clearance) values (' || rec2.id || ',' || new.id || ',' || row_sensitivity_clearance || ')' );
 
         end loop;
     end loop;
