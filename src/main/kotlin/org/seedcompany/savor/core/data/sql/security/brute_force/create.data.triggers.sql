@@ -5,21 +5,22 @@ AS $$
 declare 
 	 rec1 record;
 	 insert_trigger_name text;
+   base_schema_table_name text; 
 begin
 
-	execute format('set schema '|| quote_literal(p_schema_name));
 
 	for rec1 in (SELECT table_name FROM information_schema.tables
 				WHERE table_schema = p_schema_name and table_name like '%_data'
 				ORDER BY table_name) loop 
 
-        insert_trigger_name := quote_ident(rec1.table_name||'_security_insert_trigger');
+      base_schema_table_name := p_schema_name || '.' || rec1.table_name;
+      insert_trigger_name := quote_ident(rec1.table_name||'_security_insert_trigger');
 
         -- INSERT TRIGGER
-        execute format('DROP TRIGGER IF EXISTS '|| insert_trigger_name || ' ON ' ||rec1.table_name);
+        execute format('DROP TRIGGER IF EXISTS '|| insert_trigger_name || ' ON ' ||base_schema_table_name);
         execute format('CREATE TRIGGER ' || insert_trigger_name
         || ' AFTER INSERT
-        ON ' || rec1.table_name || 
+        ON ' || base_schema_table_name || 
         ' FOR EACH ROW
         EXECUTE PROCEDURE public.insert_data_to_security()'); 
 

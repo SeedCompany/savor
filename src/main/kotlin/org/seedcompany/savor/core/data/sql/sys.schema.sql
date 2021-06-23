@@ -148,7 +148,7 @@ create table if not exists public.global_role_memberships_data (
 	created_by int not null default 0,
 	person int,
 --	foreign key (created_by) references public.people_data(id), -- fk added later
-	foreign key (global_role) references global_roles_data(id)
+	foreign key (global_role) references public.global_roles_data(id)
 );
 
 -- SCRIPTURE REFERENCE -----------------------------------------------------------------
@@ -271,31 +271,31 @@ create table if not exists public.people_data (
 
 -- fkey for a bunch of stuff
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_roles_created_by_fk') THEN
-ALTER TABLE public.global_roles_data ADD CONSTRAINT public_global_roles_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.global_roles_data ADD CONSTRAINT public_global_roles_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_grants_created_by_fk') THEN
-ALTER TABLE public.global_role_column_grants_data ADD CONSTRAINT public_global_role_grants_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.global_role_column_grants_data ADD CONSTRAINT public_global_role_grants_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_table_permissions_created_by_fk') THEN
-ALTER TABLE public.global_role_table_permissions_data ADD CONSTRAINT public_global_role_table_permissions_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.global_role_table_permissions_data ADD CONSTRAINT public_global_role_table_permissions_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_memberships_person_fk') THEN
-ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_person_fk foreign key (person) references people_data(id);
+ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_person_fk foreign key (person) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_global_role_memberships_created_by_fk') THEN
-ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.global_role_memberships_data ADD CONSTRAINT public_global_role_memberships_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_secripture_references_created_by_fk') THEN
-ALTER TABLE public.scripture_references ADD CONSTRAINT public_secripture_references_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.scripture_references ADD CONSTRAINT public_secripture_references_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'public_locations_created_by_fk') THEN
-ALTER TABLE public.locations_data ADD CONSTRAINT public_locations_created_by_fk foreign key (created_by) references people_data(id);
+ALTER TABLE public.locations_data ADD CONSTRAINT public_locations_created_by_fk foreign key (created_by) references public.people_data(id);
 END IF; END; $$;
 
 -- Education
@@ -330,7 +330,7 @@ create table if not exists public.organizations_data (
 	sensitivity sensitivity default 'High',
 	primary_location int,
 	foreign key (created_by) references public.people_data(id),
-	foreign key (primary_location) references locations_data(id)
+	foreign key (primary_location) references public.locations_data(id)
 );
 
 
@@ -376,7 +376,7 @@ create table if not exists public.organization_grants_data(
     table_name table_name not null,
     unique (org, table_name, column_name, access_level),
     foreign key (created_by) references public.people_data(id),
-    foreign key (org) references organizations_data(id)
+    foreign key (org) references public.organizations_data(id)
 );
 
 create table if not exists public.organization_memberships_data(
@@ -386,8 +386,8 @@ create table if not exists public.organization_memberships_data(
     org int not null,
     person int not null,
     foreign key (created_by) references public.people_data(id),
-    foreign key (org) references organizations_data(id),
-    foreign key (person) references people_data(id)
+    foreign key (org) references public.organizations_data(id),
+    foreign key (person) references public.people_data(id)
 );
 
 create table if not exists public.people_to_org_relationships_data (
@@ -397,8 +397,8 @@ create table if not exists public.people_to_org_relationships_data (
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null default 0,
 	foreign key (created_by) references public.people_data(id),
-	foreign key (org) references organizations_data(id),
-	foreign key (person) references people_data(id)
+	foreign key (org) references public.organizations_data(id),
+	foreign key (person) references public.people_data(id)
 );
 
 create table if not exists public.people_to_org_relationship_type_data (
@@ -410,7 +410,7 @@ create table if not exists public.people_to_org_relationship_type_data (
     people_to_org int,
 	relationship_type person_to_org_relationship_type,
 	foreign key (created_by) references public.people_data(id),
-	foreign key (people_to_org) references people_to_org_relationships_data(id)
+	foreign key (people_to_org) references public.people_to_org_relationships_data(id)
 );
 
 -- USERS ---------------------------------------------------------------------
@@ -440,8 +440,8 @@ create table if not exists public.projects_data (
 	sensitivity sensitivity default 'High',
 	unique (primary_org, name),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (primary_org) references organizations_data(id),
-	foreign key (primary_location) references locations_data(id)
+	foreign key (primary_org) references public.organizations_data(id),
+	foreign key (primary_location) references public.locations_data(id)
 );
 
 create table if not exists public.project_memberships_data (
@@ -451,8 +451,8 @@ create table if not exists public.project_memberships_data (
     person int not null,
     project int not null,
     foreign key (created_by) references public.people_data(id),
-    foreign key (project) references projects_data(id),
-    foreign key (person) references people_data(id)
+    foreign key (project) references public.projects_data(id),
+    foreign key (person) references public.people_data(id)
 );
 
 create table if not exists public.project_roles_data (
@@ -476,7 +476,7 @@ create table if not exists public.project_role_column_grants_data (
 	table_name table_name not null,
 	unique (project_role, table_name, column_name, access_level),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (project_role) references project_roles_data(id)
+	foreign key (project_role) references public.project_roles_data(id)
 );
 
 create table if not exists public.project_member_roles_data (
@@ -488,9 +488,9 @@ create table if not exists public.project_member_roles_data (
 	project_role int,
 	unique (project, person),
 	foreign key (created_by) references public.people_data(id),
-	foreign key (person) references people_data(id),
-	foreign key (project) references projects_data(id),
-	foreign key (project_role) references project_roles_data(id)
+	foreign key (person) references public.people_data(id),
+	foreign key (project) references public.projects_data(id),
+	foreign key (project_role) references public.project_roles_data(id)
 );
 
 -- AUTHENTICATION ------------------------------------------------------------
@@ -499,5 +499,5 @@ create table if not exists public.tokens (
 	token varchar(512) primary key,
 	person int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
-	foreign key (person) references people_data(id)
+	foreign key (person) references public.people_data(id)
 );

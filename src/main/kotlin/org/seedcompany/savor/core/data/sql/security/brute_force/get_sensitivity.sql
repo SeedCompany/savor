@@ -14,6 +14,7 @@ begin
         p_table_name := p_schema_name || '.' || p_table_name;
         execute format('select sensitivity from ' || p_table_name || ' where id = ' || p_id) into data_table_row_sensitivity;
         raise info 'data_table_row_sensitivity: %', data_table_row_sensitivity;
+        
         if (data_table_row_sensitivity = 'Medium' and p_sensitivity_clearance='Low') or 
         (data_table_row_sensitivity = 'High' and (p_sensitivity_clearance = 'Medium' or p_sensitivity_clearance = 'Low')) then 
             if p_table_name = 'public.locations_data' then 
