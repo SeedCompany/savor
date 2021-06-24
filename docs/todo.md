@@ -1,5 +1,7 @@
 ## Todo
 - Make annotations to hide the websocket and event bus framework
+  - Annotation on app root to configure websocket config  
+  - Annotation on messages to add them to data structures and message router
 - add user registration, login, logout
 - add posts schema
 - add project progress schema

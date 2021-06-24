@@ -35,6 +35,26 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
+DO $$ BEGIN
+    create type public.post_type as enum (
+		'Note',
+		'Story',
+		'Prayer'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
+DO $$ BEGIN
+    create type public.post_shareability as enum (
+		'Project Team',
+		'Internal',
+		'Ask to Share Externally',
+		'External'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
 
 -- ROLES --------------------------------------------------------------------
 

@@ -4,6 +4,23 @@ create schema if not exists sc;
 
 -- ENUMs ----------------------------------------------------------
 
+-- POSTS ----------------------------------------------------------
+
+create table if not exists sc.posts_directory ( -- does not need to be secure
+    id serial primary key,
+    created_at timestamp not null default CURRENT_TIMESTAMP
+);
+
+create table if not exists sc.posts_data (
+    id serial primary key,
+    posts_directory int not null,
+    type public.post_shareability not null,
+    shareability public.post_shareability not null,
+    body text not null,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    created_by int not null default 0,
+    foreign key (created_by) references public.people_data(id)
+);
 
 -- ACCOUNTING TABLES --------------------------------------------------------
 
@@ -369,6 +386,7 @@ create table if not exists sc.projects_data (
 	mou_end timestamp,
 	name varchar(255) unique not null,
 	owning_organization varchar(32),
+	posts_directory int,
 	primary_location int,
 	root_directory int,
 	status sc.project_status,
@@ -381,6 +399,7 @@ create table if not exists sc.projects_data (
 	foreign key (field_region) references sc.field_regions_data(id),
 	foreign key (marketing_location) references public.locations_data(id),
 	foreign key (owning_organization) references sc.organizations_data(base64),
+	foreign key (posts_directory) references sc.posts_directory(id),
 	foreign key (primary_location) references public.locations_data(id),
 	foreign key (project) references public.projects_data(id),
 	foreign key (root_directory) references sc.directories_data(id)
