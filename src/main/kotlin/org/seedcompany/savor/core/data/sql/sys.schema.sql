@@ -56,6 +56,15 @@ DO $$ BEGIN
 	WHEN duplicate_object THEN null;
 END; $$;
 
+DO $$ BEGIN
+    create type public.periodic_report_type as enum (
+		'Financial',
+		'Narrative'
+	);
+	EXCEPTION
+	WHEN duplicate_object THEN null;
+END; $$;
+
 -- ROLES --------------------------------------------------------------------
 
 create table if not exists public.global_roles_data (

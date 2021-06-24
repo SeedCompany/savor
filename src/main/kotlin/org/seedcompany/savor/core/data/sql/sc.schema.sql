@@ -13,7 +13,7 @@ create table if not exists sc.posts_directory ( -- does not need to be secure
 
 create table if not exists sc.posts_data (
     id serial primary key,
-    posts_directory int not null,
+    directory int not null,
     type public.post_shareability not null,
     shareability public.post_shareability not null,
     body text not null,
@@ -367,6 +367,25 @@ create table if not exists sc.change_to_plans_data (
 	foreign key (modified_by) references public.people_data(id)
 );
 
+create table if not exists sc.periodic_reports_directory ( -- security not needed
+    id serial primary key,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+);
+
+create table if not exists sc.periodic_reports_data (
+    id serial primary key,
+    directory int not null,
+    created_at timestamp not null default CURRENT_TIMESTAMP,
+    created_by int not null,
+    end timestamp not null,
+    reportFile int not null,
+    start timestamp not null,
+    type public.periodic_report_type not null,
+    foreign key (created_by) references public.people_data(id),
+    foreign key (reportFile) references sc.files_data(id),
+    foreign key (directory) references sc.periodic_reports_directory(id)
+);
+
 create table if not exists sc.projects_data (
     id serial primary key,
     project int not null,
@@ -386,6 +405,7 @@ create table if not exists sc.projects_data (
 	mou_end timestamp,
 	name varchar(255) unique not null,
 	owning_organization varchar(32),
+	periodic_reports_directory int,
 	posts_directory int,
 	primary_location int,
 	root_directory int,
@@ -399,6 +419,7 @@ create table if not exists sc.projects_data (
 	foreign key (field_region) references sc.field_regions_data(id),
 	foreign key (marketing_location) references public.locations_data(id),
 	foreign key (owning_organization) references sc.organizations_data(base64),
+	foreign key (periodic_reports_directory) references sc.periodic_reports_directory(id),
 	foreign key (posts_directory) references sc.posts_directory(id),
 	foreign key (primary_location) references public.locations_data(id),
 	foreign key (project) references public.projects_data(id),
@@ -545,6 +566,7 @@ create table if not exists sc.language_engagements_data (
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
     modified_by int not null default 0,
 	paratext_registry varchar(32),
+	periodic_reports_directory int,
 	pnp varchar(255),
 	pnp_file int,
 	product_engagement_tag sc.project_engagement_tag,
@@ -556,6 +578,7 @@ create table if not exists sc.language_engagements_data (
     foreign key (modified_by) references public.people_data(id),
 	foreign key (change_to_plan) references sc.change_to_plans_data(id),
 	foreign key (ethnologue) references sil.table_of_languages_data(id),
+	foreign key (periodic_reports_directory) references sc.periodic_reports_directory(id),
 	foreign key (pnp_file) references sc.file_versions_data(id),
 	foreign key (project) references public.projects_data(id)
 );
@@ -692,6 +715,7 @@ create table if not exists sc.internship_engagements_data (
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
     modified_by int not null default 0,
 	paratext_registry varchar(32),
+	periodic_reports_directory int,
 	position sc.internship_position,
 	start_date timestamp,
 	start_date_override timestamp,
@@ -705,7 +729,8 @@ create table if not exists sc.internship_engagements_data (
 	foreign key (country_of_origin) references public.locations_data(id),
 	foreign key (growth_plan) references sc.file_versions_data(id),
 	foreign key (intern) references public.people_data(id),
-	foreign key (mentor) references public.people_data(id)
+	foreign key (mentor) references public.people_data(id),
+	foreign key (periodic_reports_directory) references sc.periodic_reports_directory(id)
 );
 
 create table if not exists sc.ceremonies_data (
