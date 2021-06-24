@@ -26,7 +26,7 @@ begin
                 select public.get_sensitivity_clearance(rec2.id, new.id, new.sensitivity_clearance, TG_ARGV[0], rec1.table_name) into row_sensitivity_clearance;
                 security_schema_table_name := replace(base_schema_table_name, '_data', '_security');
                 raise info 'security_schema_table_name: %', security_schema_table_name;
-                execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __sensitivity_clearance) values (' || rec2.id || ',' || new.id || ',' || row_sensitivity_clearance || ')' );
+                execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __is_cleared) values (' || rec2.id || ',' || new.id || ',' || row_sensitivity_clearance || ')' );
 
             end loop;
 

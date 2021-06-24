@@ -18,8 +18,8 @@ begin
          for rec1 in execute format('select id, sensitivity_clearance from public.people_data') loop
             
             select public.get_sensitivity_clearance(new.id, rec1.id, rec1.sensitivity_clearance, TG_TABLE_SCHEMA, TG_TABLE_NAME) into row_sensitivity_clearance;
-             execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __sensitivity_clearance) values (' || new.id || ',' || quote_literal(rec1.id) ||',' || row_sensitivity_clearance ||')'); 
-            
+             execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __is_cleared) values (' || new.id || ',' || quote_literal(rec1.id) ||',' || row_sensitivity_clearance ||')'); 
+            --  is_cleared instead of __is_cleared
          end loop; 
 		return new;
 end; $$;
