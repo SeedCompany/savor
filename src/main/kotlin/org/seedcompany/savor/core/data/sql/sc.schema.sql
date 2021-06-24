@@ -2,38 +2,7 @@
 
 create schema if not exists sc;
 
--- ENUMs ----------------------------------------------------------
-DO $$ BEGIN
-    create type sc.mime_type as enum (
-          'A',
-          'B',
-          'C'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
 
-DO $$ BEGIN
-    create type sc.sensitivity as enum (
-		'Low',
-		'Medium',
-		'High'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
-
-DO $$ BEGIN
-    create type sc.location_type as enum (
-          'City',
-          'County',
-          'State',
-		  'Country',
-          'CrossBorderArea'
-	);
-	EXCEPTION
-	WHEN duplicate_object THEN null;
-END; $$;
 
 
 -- ACCOUNTING TABLES --------------------------------------------------------
@@ -110,7 +79,7 @@ create table if not exists sc.organization_locations_data(
 );
 
 DO $$ BEGIN
-    create type sc.financial_reporting_types as enum (
+    create type public.financial_reporting_types as enum (
 		'A',
 		'B',
 		'C'
@@ -121,7 +90,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.partner_types as enum (
+    create type public.partner_types as enum (
 		'A',
 		'B',
 		'C'
@@ -136,12 +105,12 @@ create table if not exists sc.partners_data (
 	active bool,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-	financial_reporting_types sc.financial_reporting_types[],
+	financial_reporting_types public.financial_reporting_types[],
 	is_global_innovations_client bool,
 	modified_at timestamp not null default CURRENT_TIMESTAMP,
 	pmc_entity_code varchar(32),
 	point_of_contact int,
-	types sc.partner_types[],
+	types public.partner_types[],
 	foreign key (created_by) references public.people_data(id),
 	foreign key (point_of_contact) references public.people_data(id),
 	foreign key (organization) references sc.organizations_data(base64)
@@ -276,7 +245,7 @@ create table if not exists sc.file_versions_data (
 
 -- todo
 DO $$ BEGIN
-    create type sc.project_step as enum (
+    create type public.project_step as enum (
 		'A',
 		'B',
 		'C'
@@ -287,7 +256,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.project_status as enum (
+    create type public.project_status as enum (
 		'A',
 		'B',
 		'C'
@@ -298,7 +267,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.change_to_plan_type as enum (
+    create type public.change_to_plan_type as enum (
 		'a',
 		'b',
 		'c'
@@ -309,7 +278,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.change_to_plan_status as enum (
+    create type public.change_to_plan_status as enum (
 		'a',
 		'b',
 		'c'
@@ -320,9 +289,9 @@ END; $$;
 
 create table if not exists sc.change_to_plans_data (
     id serial primary key,
-    type sc.change_to_plan_type,
+    type public.change_to_plan_type,
     summary text,
-    status sc.change_to_plan_status,
+    status public.change_to_plan_status,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
 	foreign key (created_by) references public.people_data(id)
@@ -348,9 +317,9 @@ create table if not exists sc.projects_data (
 	owning_organization varchar(32),
 	primary_location int,
 	root_directory int,
-	status sc.project_status,
+	status public.project_status,
 	status_changed_at timestamp,
-	step sc.project_step,
+	step public.project_step,
 	unique (base64, change_to_plan),
     foreign key (created_by) references public.people_data(id),
 	foreign key (change_to_plan) references sc.change_to_plans_data(id),
@@ -384,7 +353,7 @@ create table if not exists sc.partnerships_data (
 
 -- todo
 DO $$ BEGIN
-    create type sc.budget_status as enum (
+    create type public.budget_status as enum (
 		'A',
 		'B',
 		'C'
@@ -400,7 +369,7 @@ create table if not exists sc.budgets_data (
     project int not null,
 	created_at timestamp not null default CURRENT_TIMESTAMP,
 	created_by int not null,
-    status sc.budget_status,
+    status public.budget_status,
     universal_template int,
     universal_template_file_url varchar(255),
     unique (base64, change_to_plan),
@@ -448,7 +417,7 @@ create table if not exists sc.project_locations_data (
 
 -- todo
 DO $$ BEGIN
-    create type sc.engagement_status as enum (
+    create type public.engagement_status as enum (
 		'A',
 		'B',
 		'C'
@@ -459,7 +428,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.project_engagement_tag as enum (
+    create type public.project_engagement_tag as enum (
 		'A',
 		'B',
 		'C'
@@ -490,10 +459,10 @@ create table if not exists sc.language_engagements_data (
 	paratext_registry varchar(32),
 	pnp varchar(255),
 	pnp_file int,
-	product_engagement_tag sc.project_engagement_tag,
+	product_engagement_tag public.project_engagement_tag,
 	start_date timestamp,
 	start_date_override timestamp,
-	status sc.engagement_status,
+	status public.engagement_status,
 	modified_at timestamp,
 	unique (project, ethnologue, change_to_plan),
 	foreign key (created_by) references public.people_data(id),
@@ -507,7 +476,7 @@ create table if not exists sc.language_engagements_data (
 
 -- todo
 DO $$ BEGIN
-    create type sc.product_mediums as enum (
+    create type public.product_mediums as enum (
 		'A',
 		'B',
 		'C'
@@ -518,7 +487,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.product_methodologies as enum (
+    create type public.product_methodologies as enum (
 		'A',
 		'B',
 		'C'
@@ -529,7 +498,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.product_purposes as enum (
+    create type public.product_purposes as enum (
 		'A',
 		'B',
 		'C'
@@ -540,7 +509,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.product_type as enum (
+    create type public.product_type as enum (
 		'Film',
 		'Literacy Material',
 		'Scripture',
@@ -558,10 +527,10 @@ create table if not exists sc.products_data (
     active bool,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null,
-    mediums sc.product_mediums[],
-    methodologies sc.product_methodologies[],
-    purposes sc.product_purposes[],
-    type sc.product_type,
+    mediums public.product_mediums[],
+    methodologies public.product_methodologies[],
+    purposes public.product_purposes[],
+    type public.product_type,
     name varchar(64),
     unique (base64, change_to_plan),
     foreign key (created_by) references public.people_data(id),
@@ -586,7 +555,7 @@ create table if not exists sc.product_scripture_references (
 
 -- todo
 DO $$ BEGIN
-    create type sc.internship_methodology as enum (
+    create type public.internship_methodology as enum (
 		'A',
 		'B',
 		'C'
@@ -597,7 +566,7 @@ END; $$;
 
 -- todo
 DO $$ BEGIN
-    create type sc.internship_position as enum (
+    create type public.internship_position as enum (
 		'A',
 		'B',
 		'C'
@@ -625,12 +594,12 @@ create table if not exists sc.internship_engagements_data (
 	intern int,
 	last_reactivated_at timestamp,
 	mentor int,
-	methodology sc.internship_methodology,
+	methodology public.internship_methodology,
 	paratext_registry varchar(32),
-	position sc.internship_position,
+	position public.internship_position,
 	start_date timestamp,
 	start_date_override timestamp,
-	status sc.engagement_status,
+	status public.engagement_status,
 	modified_at timestamp,
 	unique (project, ethnologue, change_to_plan),
 	foreign key (created_by) references public.people_data(id),
@@ -661,7 +630,7 @@ create table if not exists sc.ceremonies_data (
 -- CRM TABLES, WIP ------------------------------------------------------------------
 
 DO $$ BEGIN
-    create type sc.involvements as enum (
+    create type public.involvements as enum (
 		'CIT',
 		'Engagements'
 	);
@@ -670,7 +639,7 @@ DO $$ BEGIN
 END; $$;
 
 DO $$ BEGIN
-    create type sc.people_transitions as enum (
+    create type public.people_transitions as enum (
 		'New Org',
 		'Other'
 	);
@@ -679,7 +648,7 @@ DO $$ BEGIN
 END; $$;
 
 DO $$ BEGIN
-    create type sc.org_transitions as enum (
+    create type public.org_transitions as enum (
 		'To Manager',
 		'To Other'
 	);
