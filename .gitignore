@@ -42,3 +42,4 @@ out/
 **/application.conf
 **/application.yml
 *.notes
+one-pager.md
