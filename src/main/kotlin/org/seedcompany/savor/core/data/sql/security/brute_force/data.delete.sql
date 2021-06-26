@@ -1,6 +1,6 @@
 -- inserts the new id into the security table for each member 
 -- trigger function for each data table
-create or replace function public.insert_data_to_security()
+create or replace function public.delete_data_from_security()
 returns trigger
 language plpgsql
 as $$
@@ -13,17 +13,12 @@ begin
         base_schema_table_name := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
 		security_schema_table_name := replace(base_schema_table_name, '_data', '_security');
 		raise info 'security table: %', security_schema_table_name;
-		
-        
-         for rec1 in execute format('select id, sensitivity_clearance from public.people_data') loop
-            
-            -- select public.get_sensitivity_clearance(new.id, rec1.id, rec1.sensitivity_clearance, TG_TABLE_SCHEMA, TG_TABLE_NAME) into row_sensitivity_clearance;
+		   
 
-             execute format('insert into '|| security_schema_table_name || '(__id, __person_id, __is_cleared) values (' || new.id || ',' || quote_literal(rec1.id) ||', true)'); 
-             
+        execute format('delete from '|| security_schema_table_name || ' where __id = '|| old.id); 
             --  is_cleared instead of __is_cleared
-         end loop; 
-		return new;
+      
+		return old;
 end; $$;
 
 CREATE OR REPLACE FUNCTION public.create_data_triggers(p_schema_name text)
@@ -32,7 +27,7 @@ LANGUAGE PLPGSQL
 AS $$
 declare 
 	 rec1 record;
-	 insert_trigger_name text;
+	 delete_trigger_name text;
    base_schema_table_name text; 
 begin
 
@@ -42,18 +37,18 @@ begin
 				ORDER BY table_name) loop 
 
       base_schema_table_name := p_schema_name || '.' || rec1.table_name;
-      insert_trigger_name := quote_ident(rec1.table_name||'_security_insert_trigger');
+      delete_trigger_name := quote_ident(rec1.table_name||'_security_delete_trigger');
 
       if base_schema_table_name != 'public.people_data' then 
 
         -- INSERT TRIGGER
-        execute format('DROP TRIGGER IF EXISTS '|| insert_trigger_name || ' ON ' ||base_schema_table_name);
-        execute format('CREATE TRIGGER ' || insert_trigger_name
-        || ' AFTER INSERT
+        execute format('DROP TRIGGER IF EXISTS '|| delete_trigger_name || ' ON ' ||base_schema_table_name);
+        execute format('CREATE TRIGGER ' || delete_trigger_name
+        || ' AFTER DELETE
         ON ' || base_schema_table_name || 
         ' FOR EACH ROW
-        EXECUTE PROCEDURE public.insert_data_to_security()'); 
-
+        EXECUTE PROCEDURE public.delete_data_from_security()'); 
+        
       end if;
 
 	END loop;

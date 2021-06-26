@@ -17,7 +17,6 @@ begin
         raise info 'table_name: %', rec1.table_name;
         base_schema_table_name := TG_ARGV[0] || '.' || rec1.table_name;
 
-        if base_schema_table_name != 'public.people_data' then 
 
             for rec2 in execute format('select id from '|| base_schema_table_name) loop 
 
@@ -30,7 +29,6 @@ begin
 
             end loop;
 
-        end if;
     end loop;
     raise info 'done';
 	return new;
