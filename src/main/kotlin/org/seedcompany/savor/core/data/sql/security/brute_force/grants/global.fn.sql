@@ -1,3 +1,4 @@
+-- p_table_name example: public.locations
 create or replace function public.get_global_access_level(p_person_id int, p_table_name text, p_column_name varchar(255))
 returns public.access_level
 language plpgsql
@@ -9,7 +10,7 @@ declare
     new_access_level public.access_level;
     temp_access_level public.access_level;
 begin
-
+    
 
     for rec1 in (select global_role from public.global_role_memberships_data where person = p_person_id)loop 
     raise info 'globalfn: global_role: % | table_name: % | column_name: %', rec1.global_role, p_table_name, p_column_name;
