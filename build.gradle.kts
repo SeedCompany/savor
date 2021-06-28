@@ -17,6 +17,7 @@ repositories {
 }
 
 dependencies {
+	implementation("com.auth0:java-jwt:3.12.0")
 	implementation("org.neo4j.driver:neo4j-java-driver:4.2.5")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
 	implementation("org.springframework.boot:spring-boot-starter")

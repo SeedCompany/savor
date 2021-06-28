@@ -10,10 +10,8 @@ import org.springframework.stereotype.Component
 import java.io.File
 import javax.sql.DataSource
 
-@Component
+@Component("Postgres")
 class Postgres(
-    @Autowired
-    val config: PostgresConfig,
     @Autowired
     @Qualifier("writerDataSource")
     val writerDS: DataSource,

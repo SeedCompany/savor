@@ -7,7 +7,7 @@ import org.seedcompany.savor.common.MessageType
 // Session
 @Serializable
 data class StartSessionRequest(
-    val token: String,
+    val token: String? = null,
     val sessionId: String = "",
     var type: MessageType = MessageType.StartSessionRequest,
 )

@@ -369,7 +369,7 @@ create table if not exists sc.change_to_plans_data (
 
 create table if not exists sc.periodic_reports_directory ( -- security not needed
     id serial primary key,
-    created_at timestamp not null default CURRENT_TIMESTAMP,
+    created_at timestamp not null default CURRENT_TIMESTAMP
 );
 
 create table if not exists sc.periodic_reports_data (
@@ -377,9 +377,9 @@ create table if not exists sc.periodic_reports_data (
     directory int not null,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int not null,
-    end timestamp not null,
+    end_at timestamp not null,
     reportFile int not null,
-    start timestamp not null,
+    start_at timestamp not null,
     type public.periodic_report_type not null,
     foreign key (created_by) references public.people_data(id),
     foreign key (reportFile) references sc.files_data(id),
