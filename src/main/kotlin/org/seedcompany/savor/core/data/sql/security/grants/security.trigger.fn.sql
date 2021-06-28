@@ -1,14 +1,16 @@
 create or replace function get_access_level_for_new_security_row()
-returns triggers
+returns trigger
 language plpgsql 
 as $$
 declare
 rec1 record; 
 base_table_name text;
 base_schema_table text;
+base_schema_table_name text;
 global_access_level public.access_level;
 project_access_level public.access_level;
 final_access_level public.access_level;
+security_column_name text;
 begin
 
     base_table_name := replace(TG_TABLE_NAME, '_security', '_data');
@@ -16,7 +18,7 @@ begin
 
     -- find access level for every column of the newly inserted record
 
-    for rec1 in (select cast(column_name as text) from information_schema.columns where table_schema = TG_TABLE_SCHEMA and table_name = base_table_name)
+    for rec1 in (select cast(column_name as text) from information_schema.columns where table_schema = TG_TABLE_SCHEMA and table_name = base_table_name) loop 
         
         select public.get_global_access_level( new.__person_id, base_schema_table_name , rec1.column_name) into global_access_level;
                

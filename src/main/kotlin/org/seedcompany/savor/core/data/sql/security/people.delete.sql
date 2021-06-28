@@ -18,7 +18,7 @@ begin
         base_schema_table_name := TG_ARGV[0] || '.' || rec1.table_name;
         security_schema_table_name := replace(base_schema_table_name, '_data', '_security');
 
-        delete from security_schema_table_name where __person_id = old.id;
+       execute format('delete from '|| security_schema_table_name||' where __person_id = ' || old.id);
 
     end loop;
     raise info 'done';
@@ -30,13 +30,13 @@ drop trigger if exists delete_people_sc_security_trigger on public.people_data;
 
 
 create trigger delete_people_public_security_trigger 
-after insert 
+after delete 
 on public.people_data
 for each row 
 execute procedure public.delete_person_from_security('public');
 
 create trigger delete_people_sc_security_trigger 
-after insert 
+after delete 
 on public.people_data
 for each row 
 execute procedure public.delete_person_from_security('sc');
