@@ -24,27 +24,24 @@ class Postgres(
 ) {
 
     init {
-        props.setProperty("port", config.port)
-        props.setProperty("user", config.user)
-        props.setProperty("password", config.password)
-        props.setProperty("ssl", "false")
-        this.conn = DriverManager.getConnection(url, props)
-        
-        val statement = conn.createStatement()
-        val fileNamesList = mutableListOf<String>()
-        val sqlFileRegex = Regex(pattern = "^((?!bootstrap).)*.sql\$")
-        File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/").walk().filter{item-> Files.isRegularFile(item.toPath())}.forEach{
-            val matched = sqlFileRegex.containsMatchIn(input = it.toString())
-            if(matched)
-                fileNamesList.add(it.toString());
-        }
-        fileNamesList.sort();
-        for(i in fileNamesList.indices){
-            println(fileNamesList[i])
-            statement.execute(File(fileNamesList[i]).readText())
-        }
 
-        statement.close()
+        writerDS.connection.use {
+            val statement = it.createStatement()
+            val fileNamesList = mutableListOf<String>()
+            val sqlFileRegex = Regex(pattern = "^((?!bootstrap).)*.sql\$")
+            File("./src/main/kotlin/org/seedcompany/savor/core/data/sql/").walk().filter{item-> Files.isRegularFile(item.toPath())}.forEach{
+                val matched = sqlFileRegex.containsMatchIn(input = it.toString())
+                if(matched)
+                    fileNamesList.add(it.toString());
+            }
+            fileNamesList.sort();
+            for(i in fileNamesList.indices){
+                println(fileNamesList[i])
+                statement.execute(File(fileNamesList[i]).readText())
+            }
+
+            statement.close()
+        }
     }
 
     @Configuration
