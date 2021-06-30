@@ -599,7 +599,7 @@ create table if not exists public.tokens (
 create table if not exists public.sessions (
     session varchar(128) primary key,
     token varchar(512) not null,
-    person int not null,
+    person int,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     foreign key (person) references public.people_data(id),
     foreign key (token) references public.tokens(token)

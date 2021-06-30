@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.DependsOn
+import org.springframework.jdbc.core.JdbcTemplate
 import javax.sql.DataSource
 
 @Component
@@ -22,8 +23,18 @@ class StartSession(
     @Autowired
     val util: Utility,
     @Autowired
-    val publisher: ApplicationEventPublisher
+    val publisher: ApplicationEventPublisher,
+    @Autowired
+    @Qualifier("writerDataSource")
+    val writerDS: DataSource,
+    @Autowired
+    @Qualifier("readerDataSource")
+    val readerDS: DataSource,
 )  {
+
+    val jdbcWriter: JdbcTemplate = JdbcTemplate(writerDS)
+    val jdbcReader: JdbcTemplate = JdbcTemplate(readerDS)
+
     //language=SQL
     val startSessionProc = """
         CREATE OR REPLACE PROCEDURE start_session(

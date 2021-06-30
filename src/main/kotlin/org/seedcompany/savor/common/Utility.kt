@@ -19,8 +19,12 @@ class Utility (
     @Autowired
     @Qualifier("writerDataSource")
     val writerDS: DataSource,
+    @Autowired
+    @Qualifier("readerDataSource")
+    val readerDS: DataSource,
 ) {
-    val jdbcTemplate: JdbcTemplate = JdbcTemplate(writerDS)
+    val jdbcWriter: JdbcTemplate = JdbcTemplate(writerDS)
+    val jdbcReader: JdbcTemplate = JdbcTemplate(readerDS)
 
     private var algo: Algorithm? = null
 
@@ -54,7 +58,7 @@ class Utility (
     }
 
     fun getUserIdFromSessionId(sessionId: String): Int? {
-        val person_id = jdbcTemplate.queryForObject(
+        val person_id = jdbcWriter.queryForObject(
             //language=SQL
             """
                 select person from public.sessions where session = ?;
