@@ -1,4 +1,4 @@
-create or replace function sys_create_role(
+create or replace function public.sys_create_role(
     in pRoleName VARCHAR(255),
     in pOrgName VARCHAR(255)
 )
@@ -33,12 +33,12 @@ begin
     return vResponseCode;
 end; $$;
 
-create or replace function sys_add_role_grant(
+create or replace function public.sys_add_role_grant(
     in pRoleName VARCHAR(255),
     in pOrgName VARCHAR(255),
-    in pTableName table_name,
+    in pTableName public.table_name,
     in pColumnName VARCHAR(255),
-    in pAccessLevel access_level
+    in pAccessLevel public.access_level
 )
 returns INT
 language plpgsql
@@ -61,14 +61,14 @@ begin
             AND global_roles_data.name = pRoleName;
         IF FOUND THEN
             SELECT global_role
-            FROM global_role_column_grants_data
+            FROM public.global_role_column_grants_data
             INTO vSysRoleId2
-            WHERE global_role_column_grants_data.global_role = vSysRoleId
-                AND global_role_column_grants_data.table_name = pTableName
-                AND global_role_column_grants_data.column_name = pColumnName
-                AND global_role_column_grants_data.access_level = pAccessLevel;
+            WHERE public.global_role_column_grants_data.global_role = vSysRoleId
+                AND public.global_role_column_grants_data.table_name = pTableName
+                AND public.global_role_column_grants_data.column_name = pColumnName
+                AND public.global_role_column_grants_data.access_level = pAccessLevel;
             IF NOT FOUND THEN
-                INSERT INTO global_role_column_grants_data("global_role", "table_name", "column_name", "access_level")
+                INSERT INTO public.global_role_column_grants_data("global_role", "table_name", "column_name", "access_level")
                 VALUES (vSysRoleId, pTableName, pColumnName, pAccessLevel);
                 vResponseCode := 0;
             ELSE
@@ -83,7 +83,7 @@ begin
     return vResponseCode;
 end; $$;
 
-create or replace function sys_add_role_member(
+create or replace function public.sys_add_role_member(
     in pRoleName VARCHAR(255),
     in pOrgName VARCHAR(255),
     in pUserEmail VARCHAR(255)
@@ -113,7 +113,7 @@ begin
             into vSysPersonId
             where users_data.email = pUserEmail;
             if found then
-                INSERT INTO global_role_memberships_data("person", "global_role")
+                INSERT INTO public.global_role_memberships_data("person", "global_role")
                 VALUES (vSysPersonId, vSysRoleId);
                 vResponseCode := 0;
             else
