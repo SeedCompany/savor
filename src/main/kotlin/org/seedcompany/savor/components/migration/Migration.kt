@@ -20,7 +20,7 @@ class Migration (
 
     @Bean
     fun migrate() {
-        println("migrating...")
+//        println("migrating...")
 //        MigrateOrgs(config, neo4j,connection).migrateOrganizations()
 //        MigrateUsers(config, neo4j,connection).migrateUsers()
 //        MigrateRoles(config, neo4j,connection).migrateRoles()

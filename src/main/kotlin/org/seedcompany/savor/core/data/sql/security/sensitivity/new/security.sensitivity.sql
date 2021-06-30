@@ -23,7 +23,7 @@ begin
         security_schema_table_name := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
 
         select sensitivity_clearance into person_sensitivity_clearance from public.people_data where id = new.__person_id;
-        execute format('select sensitivity from ' || base_schema_table_name || ' where id = ' || p_id) into data_table_row_sensitivity;
+        execute format('select sensitivity from ' || base_schema_table_name || ' where id = ' || new.__id) into data_table_row_sensitivity;
 
         raise info 'data_table_row_sensitivity: % | person_sensitivity_clearance: %', data_table_row_sensitivity, person_sensitivity_clearance;
         
@@ -34,7 +34,8 @@ begin
     
 
         end if;    
-    end if;    
+    end if; 
+    return new;   
 end; $$;
 
 CREATE OR REPLACE FUNCTION public.create_security_sensitivity_triggers(p_schema_name text)
@@ -62,7 +63,7 @@ begin
         || ' AFTER INSERT
         ON ' || security_schema_table_name || 
         ' FOR EACH ROW
-        EXECUTE PROCEDURE public.insert_data_to_security()'); 
+        EXECUTE PROCEDURE public.security_sensitivity_trigger()'); 
 
 
 	END loop;

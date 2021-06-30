@@ -12,8 +12,8 @@ rec1 record;
 begin                                           
         base_schema_table_name := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
 		security_schema_table_name := replace(base_schema_table_name, '_data', '_security');
-		raise info 'security table: %', security_schema_table_name;
-		
+		raise info 'data.insert.fn | security table: %', security_schema_table_name;
+
         
          for rec1 in execute format('select id, sensitivity_clearance from public.people_data') loop
             
@@ -43,7 +43,7 @@ begin
 
       base_schema_table_name := p_schema_name || '.' || rec1.table_name;
       insert_trigger_name := quote_ident(rec1.table_name||'_security_insert_trigger');
-
+      raise info 'data.insert.fn base_schema_table_name: %', base_schema_table_name;
       if base_schema_table_name != 'public.people_data' then 
 
         -- INSERT TRIGGER

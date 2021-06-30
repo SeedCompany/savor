@@ -247,7 +247,6 @@ create table if not exists sil.table_of_languages_data (
 
 create table if not exists public.people_data (
     id serial primary key,
-	reference_count serial,
     about text,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     created_by int default 0, -- don't make not null!
